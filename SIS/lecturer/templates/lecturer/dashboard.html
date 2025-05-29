@@ -1,135 +1,279 @@
-{% extends 'lecturer/base_lecturer.html' %}
-{% load widget_tweaks %}
+{% extends 'base.html' %}
 {% load static %}
 
-{% block page_title %}Lecturer Dashboard{% endblock %}
+{% block title %}Lecturer Dashboard{% endblock %}
 
-{% block dashboard_content %}
+{% block content %}
+<!-- Navigation Header with Logo and Date/Time -->
+<div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 shadow-xl mb-8">
+  <div class="flex justify-between items-center">
+    <!-- Left side - Logo and Dashboard title -->
+    <div class="flex items-center space-x-4">
+      <img src="{% static 'images/breyer.jpg' %}" alt="Breyer Logo" class="h-12 w-auto">
+      <div>
+        <h1 class="text-2xl font-bold text-white">Lecturer Dashboard</h1>
+        <p class="text-gray-300 text-sm">{{ request.user.get_full_name|default:request.user.email }}</p>
+      </div>
+    </div>
 
-<!-- Dashboard Stats -->
-<section class="grid grid-cols-1 sm:grid-cols-3 gap-8 p-8 bg-gray-50 border-b border-gray-200 shadow-inner">
-  <div class="bg-white rounded-xl shadow-md p-8 flex flex-col items-center justify-center border-t-4 border-purple-600">
-    <span class="text-5xl font-extrabold text-purple-700">{{ courses_data|length }}</span>
-    <span class="mt-2 text-gray-600 uppercase tracking-wide font-semibold">Courses</span>
-  </div>
-  <div class="bg-white rounded-xl shadow-md p-8 flex flex-col items-center justify-center border-t-4 border-purple-600">
-    <span class="text-5xl font-extrabold text-purple-700">{{ total_students }}</span>
-    <span class="mt-2 text-gray-600 uppercase tracking-wide font-semibold">Total Students</span>
-  </div>
-  <div class="bg-white rounded-xl shadow-md p-8 flex flex-col items-center justify-center border-t-4 border-purple-600">
-    <span class="text-5xl font-extrabold text-purple-700">{{ average_attendance }}</span>
-    <span class="mt-2 text-gray-600 uppercase tracking-wide font-semibold">Avg. Attendance (%)</span>
-  </div>
-</section>
-
-<!-- Main Content -->
-<!-- Profile Tab -->
-<section id="tab-content-profile" class="tab-content space-y-6">
-  <div class="bg-purple-700 bg-opacity-95 rounded-2xl shadow-lg text-white p-10 max-w-3xl mx-auto">
-    <h2 class="text-3xl font-extrabold mb-6 tracking-wide">Your Profile</h2>
-    <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 text-lg">
-      <div>
-        <dt class="font-semibold uppercase tracking-wider text-purple-300">Name</dt>
-        <dd class="mt-1">{{ request.user.get_full_name|default:"N/A" }}</dd>
+    <!-- Right side - Date/Time and Profile -->
+    <div class="flex items-center space-x-6">
+      <!-- Current Date and Time -->
+      <div class="text-right">
+        <p class="text-white font-medium">{% now "F j, Y" %}</p>
+        <p class="text-gray-300 text-sm">{% now "g:i A" %}</p>
       </div>
-      <div>
-        <dt class="font-semibold uppercase tracking-wider text-purple-300">Email</dt>
-        <dd class="mt-1">{{ request.user.email }}</dd>
-      </div>
-      <div>
-        <dt class="font-semibold uppercase tracking-wider text-purple-300">Department</dt>
-        <dd class="mt-1">{{ request.user.department|default:"Not set" }}</dd>
-      </div>
-      <div>
-        <dt class="font-semibold uppercase tracking-wider text-purple-300">Phone</dt>
-        <dd class="mt-1">{{ request.user.phone_number|default:"Not set" }}</dd>
-      </div>
-      <div class="md:col-span-2">
-        <dt class="font-semibold uppercase tracking-wider text-purple-300">Address</dt>
-        <dd class="mt-1">{{ request.user.address|default:"Not set" }}</dd>
-      </div>
-    </dl>
-    <a href="{% url 'lecturer:profile_update' %}" class="inline-block mt-8 px-8 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-semibold shadow-lg transition duration-300">Edit Profile</a>
-  </div>
-</section>
-
-<!-- Classes Tab -->
-<section id="tab-content-classes" class="tab-content hidden space-y-10">
-  <div class="max-w-3xl mx-auto">
-    <input type="text" id="studentSearch" onkeyup="filterStudents()" placeholder="Search students by name or email..." aria-label="Search students" class="w-full px-5 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition" />
-  </div>
-  {% if courses_data %}
-    <div class="space-y-8 max-w-7xl mx-auto">
-      {% for item in courses_data %}
-        <article class="bg-white rounded-2xl shadow-lg border-t-4 border-purple-600 overflow-hidden">
-          <button type="button" aria-expanded="false" aria-controls="course-panel-{{ item.course.id }}" class="w-full flex justify-between items-center px-8 py-5 bg-purple-700 hover:bg-purple-800 focus:outline-none focus:ring-4 focus:ring-purple-500 transition-colors duration-300 text-white font-semibold text-xl tracking-wide" onclick="toggleCoursePanel('{{ item.course.id }}', this)">
-            <span>{{ item.course.name }} <span class="text-purple-300 text-lg font-normal">({{ item.course.code }})</span></span>
-            <svg class="h-6 w-6 transform transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-              <path d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          <div id="course-panel-{{ item.course.id }}" class="p-8 space-y-6 hidden bg-purple-50">
-            {% if item.students_info %}
-              <div class="grid md:grid-cols-2 gap-8">
-                {% for info in item.students_info %}
-                  <div class="bg-white rounded-xl shadow-md p-6 student-row relative" tabindex="0" aria-label="Student {{ info.student.user.get_full_name|default:info.student.user.email }}" data-student="{{ info.student.user.get_full_name|default:'' }} {{ info.email }}">
-                    <div class="flex justify-between items-start">
-                      <div>
-                        <h3 class="text-purple-800 font-bold text-xl">{{ info.student.user.get_full_name|default:info.student.user.email }}</h3>
-                        <p class="text-gray-500 text-sm">{{ info.email }}</p>
-                        <p class="text-gray-400 text-xs mt-1">Enrolled: {{ info.date_enrolled|date:"M d, Y" }}</p>
-                      </div>
-                      <div class="relative">
-                        <button type="button" aria-haspopup="true" aria-expanded="false" aria-controls="student-actions-{{ info.enrollment.id }}" onclick="toggleDropdown('student-actions-{{ info.enrollment.id }}', this)" class="px-3 py-1 bg-purple-200 text-purple-700 rounded-lg font-semibold hover:bg-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-500 transition">Actions ▼</button>
-                        <div id="student-actions-{{ info.enrollment.id }}" class="hidden absolute right-0 mt-2 w-80 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 p-5 space-y-4" role="menu" aria-label="Actions for {{ info.student.user.get_full_name|default:info.student.user.email }}">
-                          <!-- Mark Attendance Form -->
-                          <form method="post" action="{% url 'lecturer:mark_attendance' %}" class="space-y-2">
-                            {% csrf_token %}
-                            <input type="hidden" name="enrollment" value="{{ info.enrollment.id }}">
-                            <label class="block font-semibold text-purple-700">Mark Attendance</label>
-                            <div class="flex items-center space-x-3">
-                              <input type="date" name="date" required class="flex-grow rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" />
-                              <label class="flex items-center space-x-2 text-gray-700">
-                                <input type="checkbox" name="present" checked class="h-5 w-5 rounded border-gray-300 focus:ring-purple-500" />
-                                <span>Present</span>
-                              </label>
-                              <button type="submit" name="mark_attendance" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">Save</button>
-                            </div>
-                          </form>
-                          <!-- Add Grade Form -->
-                          <form method="post" action="{% url 'lecturer:add_grade' %}" class="space-y-2">
-                            {% csrf_token %}
-                            <input type="hidden" name="enrollment" value="{{ info.enrollment.id }}">
-                            <label class="block font-semibold text-purple-700">Add Grade</label>
-                            <div class="flex items-center space-x-3">
-                              <input type="text" name="grade" placeholder="Grade" required class="flex-grow rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" />
-                              <button type="submit" name="add_grade" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Save</button>
-                            </div>
-                          </form>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                {% endfor %}
-              </div>
-            {% else %}
-              <p class="text-gray-500 italic">No students enrolled in this course.</p>
-            {% endif %}
+      
+      <!-- Profile Picture -->
+      <a href="#" class="relative group">
+        {% if request.user.profile_picture %}
+          <img src="{{ request.user.profile_picture.url }}" alt="Profile Picture" 
+               class="w-12 h-12 rounded-full object-cover border-2 border-white/20 group-hover:border-blue-400 transition-colors">
+        {% else %}
+          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center border-2 border-white/20 group-hover:border-blue-400 transition-colors">
+            <span class="text-white font-semibold text-lg">
+              {{ request.user.get_full_name|first|upper|default:request.user.email|first|upper }}
+            </span>
           </div>
-        </article>
+        {% endif %}
+        <!-- Online indicator -->
+        <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+      </a>
+
+      <!-- Logout Button -->
+      <form action="{% url 'logout' %}" method="post" class="inline">
+        {% csrf_token %}
+        <button type="submit" 
+                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 group">
+          <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+          </svg>
+          <span>Logout</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Welcome Section -->
+<div class="text-center mb-8">
+  <h2 class="text-3xl font-bold text-white mb-2">Welcome back!</h2>
+  <p class="text-xl text-gray-300">Here's your teaching overview</p>
+</div>
+
+<!-- Quick Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+  <!-- Total Courses -->
+  <div class="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl p-6 text-white shadow-xl transform hover:scale-105 transition-all duration-300">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-indigo-100 text-sm font-medium">My Courses</p>
+        <p class="text-3xl font-bold">{{ courses_data|length }}</p>
+      </div>
+      <div class="bg-white/20 rounded-full p-3">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Students -->
+  <div class="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-6 text-white shadow-xl transform hover:scale-105 transition-all duration-300">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-emerald-100 text-sm font-medium">Total Students</p>
+        <p class="text-3xl font-bold">
+          {% for item in courses_data %}{{ item.students_info|length }}{% if not forloop.last %}+{% endif %}{% empty %}0{% endfor %}
+        </p>
+      </div>
+      <div class="bg-white/20 rounded-full p-3">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Grades -->
+  <div class="bg-gradient-to-br from-rose-600 to-rose-700 rounded-2xl p-6 text-white shadow-xl transform hover:scale-105 transition-all duration-300">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-rose-100 text-sm font-medium">Pending Grades</p>
+        <p class="text-3xl font-bold">0</p>
+      </div>
+      <div class="bg-white/20 rounded-full p-3">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Average Attendance -->
+  <div class="bg-gradient-to-br from-amber-600 to-amber-700 rounded-2xl p-6 text-white shadow-xl transform hover:scale-105 transition-all duration-300">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-amber-100 text-sm font-medium">Avg Attendance</p>
+        <p class="text-3xl font-bold">85%</p>
+      </div>
+      <div class="bg-white/20 rounded-full p-3">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+  <!-- Profile Card -->
+  <div class="lg:col-span-2">
+    <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-semibold text-white">Your Profile</h2>
+        <a href="#" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+          Edit Profile
+        </a>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-white/5 rounded-lg p-4">
+          <h3 class="text-sm font-medium text-gray-300 mb-1">Name</h3>
+          <p class="text-white">{{ request.user.get_full_name|default:"N/A" }}</p>
+        </div>
+        <div class="bg-white/5 rounded-lg p-4">
+          <h3 class="text-sm font-medium text-gray-300 mb-1">Email</h3>
+          <p class="text-white">{{ request.user.email }}</p>
+        </div>
+        <div class="bg-white/5 rounded-lg p-4">
+          <h3 class="text-sm font-medium text-gray-300 mb-1">Phone</h3>
+          <p class="text-white">{{ request.user.phone_number|default:"Not set" }}</p>
+        </div>
+        <div class="bg-white/5 rounded-lg p-4">
+          <h3 class="text-sm font-medium text-gray-300 mb-1">Department</h3>
+          <p class="text-white">{{ request.user.department|default:"Not set" }}</p>
+        </div>
+        <div class="bg-white/5 rounded-lg p-4">
+          <h3 class="text-sm font-medium text-gray-300 mb-1">Address</h3>
+          <p class="text-white">{{ request.user.address|default:"Not set" }}</p>
+        </div>
+        <div class="bg-white/5 rounded-lg p-4">
+          <h3 class="text-sm font-medium text-gray-300 mb-1">Teaching Since</h3>
+          <p class="text-white">{{ request.user.date_joined|date:"M d, Y" }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions Sidebar -->
+  <div class="space-y-6">
+    <!-- Quick Actions -->
+    <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl">
+      <h3 class="text-lg font-semibold text-white mb-4">Quick Actions</h3>
+      <div class="space-y-3">
+        <a href="#" class="flex items-center p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-white group">
+          <svg class="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Create Assignment
+        </a>
+        <a href="#" class="flex items-center p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-white group">
+          <svg class="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+          </svg>
+          Grade Submissions
+        </a>
+        <a href="#" class="flex items-center p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-white group">
+          <svg class="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          Take Attendance
+        </a>
+      </div>
+    </div>
+
+    <!-- Account Status -->
+    <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl">
+      <h3 class="text-lg font-semibold text-white mb-4">Account Status</h3>
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-gray-300 text-sm">Status</span>
+          <span class="bg-green-600/20 text-green-300 px-2 py-1 rounded-full text-xs">Active</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-gray-300 text-sm">Role</span>
+          <span class="text-white text-sm">{{ request.user.get_role_display }}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-gray-300 text-sm">Last Login</span>
+          <span class="text-white text-sm">{{ request.user.last_login|timesince }} ago</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Courses Section -->
+<div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl mt-8">
+  <div class="flex items-center justify-between mb-6">
+    <h2 class="text-2xl font-semibold text-white">My Courses</h2>
+    <span class="text-gray-300 text-sm">{{ courses_data|length }} course{{ courses_data|length|pluralize }}</span>
+  </div>
+  
+  {% if courses_data %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for item in courses_data %}
+      <div class="bg-white/5 rounded-xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300 group">
+        <div class="mb-4">
+          <h3 class="text-xl font-semibold text-white mb-2 group-hover:text-blue-300 transition-colors">{{ item.course.name }}</h3>
+          <p class="text-gray-300 text-sm">{{ item.course.code }}</p>
+          <p class="text-gray-400 text-xs mt-1">{{ item.students_info|length }} student{{ item.students_info|length|pluralize }} enrolled</p>
+        </div>
+        
+        <!-- Students List -->
+        <div class="mb-4">
+          <h4 class="text-sm font-medium text-gray-300 mb-2">Recent Students</h4>
+          {% if item.students_info %}
+            <div class="space-y-2">
+              {% for info in item.students_info|slice:":3" %}
+              <div class="flex justify-between items-center bg-white/5 rounded-lg p-2">
+                <span class="text-sm text-gray-300">{{ info.student.user.get_full_name|default:info.student.user.email }}</span>
+                <span class="text-xs text-gray-400">{{ info.date_enrolled|date:"M d" }}</span>
+              </div>
+              {% endfor %}
+              {% if item.students_info|length > 3 %}
+              <p class="text-xs text-gray-400 text-center">+{{ item.students_info|length|add:"-3" }} more students</p>
+              {% endif %}
+            </div>
+          {% else %}
+            <p class="text-sm text-gray-400 italic">No students enrolled yet</p>
+          {% endif %}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="pt-4 border-t border-white/10 space-y-2">
+          <button class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-300 text-center block group-hover:shadow-lg">
+            Manage Course
+          </button>
+          <button class="w-full bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-all duration-300 text-center border border-white/20">
+            Take Attendance
+          </button>
+        </div>
+      </div>
       {% endfor %}
     </div>
   {% else %}
-    <p class="text-center text-gray-500 py-10">You are not assigned to any courses yet.</p>
+    <div class="text-center py-12">
+      <div class="bg-white/5 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+        </svg>
+      </div>
+      <h3 class="text-xl font-semibold text-white mb-2">No Courses Assigned</h3>
+      <p class="text-gray-400">You are not assigned to teach any courses at the moment.</p>
+    </div>
   {% endif %}
-</section>
-
-<!-- Calendar Tab -->
-<section id="tab-content-calendar" class="tab-content hidden space-y-6">
-  <div class="bg-white rounded-2xl shadow-lg p-10 max-w-4xl mx-auto">
-    <h2 class="text-3xl font-extrabold mb-6 text-purple-700 tracking-wide">Calendar</h2>
-    <p class="text-gray-600">Coming soon: Your teaching calendar and schedule will appear here.</p>
-  </div>
-</section>
-
+</div>
 {% endblock %}
