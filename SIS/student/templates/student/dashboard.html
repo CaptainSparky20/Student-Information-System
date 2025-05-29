@@ -9,7 +9,7 @@
   <div class="flex justify-between items-center">
     <!-- Left side - Logo and Dashboard title -->
     <div class="flex items-center space-x-4">
-      <img src="{% static 'imagess/logo.png' %}" alt="Breyer Logo" class="h-12 w-auto">
+      <img src="{% static 'images/breyer.jpg' %}" alt="Breyer Logo" class="h-12 w-auto">
       <div>
         <h1 class="text-2xl font-bold text-white">Student Dashboard</h1>
         <p class="text-gray-300 text-sm">{{ request.user.get_full_name|default:request.user.email }}</p>
@@ -78,28 +78,43 @@
     </div>
   </div>
 
-  <!-- Average Attendance -->
-  <div class="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl p-6 text-white shadow-xl transform hover:scale-105 transition-all duration-300">
-    <div class="flex items-center justify-between">
-      <div>
-        <p class="text-green-100 text-sm font-medium">Avg Attendance</p>
-        <p class="text-3xl font-bold">
-          {% if courses_data %}
-            {% for item in courses_data %}
-              {% if forloop.first %}{{ item.attendance_percentage|floatformat:0 }}%{% endif %}
-            {% endfor %}
-          {% else %}
-            0%
-          {% endif %}
-        </p>
-      </div>
-      <div class="bg-white/20 rounded-full p-3">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
+  <!-- Average Attendance - Now Clickable -->
+  {% if courses_data %}
+    {% for item in courses_data %}
+      {% if forloop.first %}
+        <a href="{% url 'student:attendance_detail' item.course.id %}" class="block">
+          <div class="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl p-6 text-white shadow-xl transform hover:scale-105 transition-all duration-300 cursor-pointer hover:shadow-2xl">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-green-100 text-sm font-medium">Avg Attendance</p>
+                <p class="text-3xl font-bold">{{ item.attendance_percentage|floatformat:0 }}%</p>
+                <p class="text-green-200 text-xs mt-1">Click to view details</p>
+              </div>
+              <div class="bg-white/20 rounded-full p-3">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </a>
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    <div class="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl p-6 text-white shadow-xl transform hover:scale-105 transition-all duration-300">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-green-100 text-sm font-medium">Avg Attendance</p>
+          <p class="text-3xl font-bold">0%</p>
+        </div>
+        <div class="bg-white/20 rounded-full p-3">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
       </div>
     </div>
-  </div>
+  {% endif %}
 
   <!-- Total Grades -->
   <div class="bg-gradient-to-br from-purple-600 to-purple-700 rounded-2xl p-6 text-white shadow-xl transform hover:scale-105 transition-all duration-300">
@@ -134,6 +149,7 @@
   </div>
 </div>
 
+<!-- Rest of your existing content remains the same -->
 <!-- Main Content Grid -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
   <!-- Profile Card -->
