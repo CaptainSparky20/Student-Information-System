@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Update Profile{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto p-10 bg-white rounded-3xl shadow-lg mt-12">
+
+  <h1 class="text-3xl font-extrabold text-gray-900 mb-10 select-none text-center">Update Your Profile</h1>
+
+  {% if messages %}
+    <div class="mb-6">
+      {% for message in messages %}
+        <div class="p-4 mb-3 rounded 
+          {% if message.tags == 'error' %}bg-red-100 text-red-700
+          {% elif message.tags == 'success' %}bg-green-100 text-green-700
+          {% else %}bg-gray-100 text-gray-700{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <form method="post" class="space-y-8">
+    {% csrf_token %}
+
+    {# Render form fields manually for better control #}
+    <div>
+      <label for="{{ form.first_name.id_for_label }}" class="block mb-2 font-semibold text-gray-700">First Name</label>
+      {{ form.first_name }}
+      {% if form.first_name.errors %}
+        <p class="text-red-600 text-sm mt-1">{{ form.first_name.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <div>
+      <label for="{{ form.last_name.id_for_label }}" class="block mb-2 font-semibold text-gray-700">Last Name</label>
+      {{ form.last_name }}
+      {% if form.last_name.errors %}
+        <p class="text-red-600 text-sm mt-1">{{ form.last_name.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <div>
+      <label for="{{ form.email.id_for_label }}" class="block mb-2 font-semibold text-gray-700">Email</label>
+      {{ form.email }}
+      {% if form.email.errors %}
+        <p class="text-red-600 text-sm mt-1">{{ form.email.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <div>
+      <label for="{{ form.department.id_for_label }}" class="block mb-2 font-semibold text-gray-700">Department</label>
+      {{ form.department }}
+      {% if form.department.errors %}
+        <p class="text-red-600 text-sm mt-1">{{ form.department.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold shadow-md">
+      Save Changes
+    </button>
+  </form>
+
+  <div class="mt-8 text-center">
+    <a href="{% url 'adminportal:dashboard' %}" class="text-blue-600 hover:underline font-medium">
+      &larr; Back to Dashboard
+    </a>
+  </div>
+
+</div>
+
+{# Add Tailwind form input styling via widget attrs in your form class for best results #}
+{% endblock %}

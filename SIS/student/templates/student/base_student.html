@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% block page_title %}Student{% endblock %}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto p-6 bg-white bg-opacity-90 rounded-xl shadow-xl">
+
+  <!-- Header with Logo, Welcome, Profile Dropdown, Logout -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 border-b border-gray-300 pb-4 space-y-4 md:space-y-0 md:space-x-6">
+    <div class="flex items-center space-x-4">
+      <img src="{% static 'images/breyer.jpg' %}" alt="Breyer Logo" class="h-12 w-auto" />
+      <h1 class="text-3xl font-bold text-purple-700">
+        Welcome, {{ request.user.get_full_name|default:request.user.email }}!
+      </h1>
+    </div>
+    <div class="flex items-center space-x-4">
+      {% include 'student/_profile_dropdown.html' %}
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit"
+                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition font-semibold focus:outline-none focus:ring-2 focus:ring-red-500">
+          Logout
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <nav class="flex border-b border-gray-300 mb-6">
+    <button class="tab-button active-tab px-4 py-2 mb-[-1px] border-b-2 border-purple-700 text-purple-700 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-400" data-tab="profile-tab">
+      Profile
+    </button>
+    <button class="tab-button px-4 py-2 mb-[-1px] border-b-2 border-transparent text-gray-600 hover:text-purple-700 hover:border-purple-700 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-400" data-tab="enrollment-tab">
+      Enrollment
+    </button>
+  </nav>
+
+  {% block dashboard_content %}{% endblock %}
+</div>
+
+{% block extra_js %}
+<script>
+  // Profile dropdown toggle
+  document.addEventListener('DOMContentLoaded', () => {
+    const dropdown = document.getElementById('profileDropdown');
+    const toggleBtn = document.getElementById('profileToggle');
+
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isHidden = dropdown.classList.contains('hidden');
+      dropdown.classList.toggle('hidden');
+      toggleBtn.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+    });
+
+    document.addEventListener('click', () => {
+      if (!dropdown.classList.contains('hidden')) {
+        dropdown.classList.add('hidden');
+        toggleBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Tabs functionality
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const target = button.getAttribute('data-tab');
+
+        tabButtons.forEach(btn => btn.classList.remove('active-tab', 'border-purple-700', 'text-purple-700'));
+        tabContents.forEach(content => content.classList.add('hidden'));
+        
+        document.getElementById(target).classList.remove('hidden');
+        button.classList.add('active-tab', 'border-purple-700', 'text-purple-700');
+      });
+    });
+
+    // Date and Time update
+    function updateDateTime() {
+      const dtElement = document.getElementById('datetime');
+      if (!dtElement) return;
+
+      const now = new Date();
+
+      const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const optionsTime = { hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true };
+
+      const formattedDate = now.toLocaleDateString(undefined, optionsDate);
+      const formattedTime = now.toLocaleTimeString(undefined, optionsTime);
+
+      dtElement.textContent = `${formattedDate} — ${formattedTime}`;
+    }
+
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+  });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Active tab button styling */
+  .active-tab {
+    border-bottom-width: 2px;
+    background-color: rgba(168, 85, 247, 0.06);
+  }
+  /* Text shadow for readability on purple bg */
+  .drop-shadow {
+    text-shadow: 0 1px 2px rgba(0,0,0,0.12);
+  }
+</style>
+{% endblock %}
+{% endblock %}

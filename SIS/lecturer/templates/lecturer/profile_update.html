@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static widget_tweaks %}
+
+{% block title %}Update Profile{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto p-10 bg-white rounded-3xl shadow-lg mt-12">
+
+  <h1 class="text-3xl font-extrabold text-gray-900 mb-10 select-none text-center">Update Your Profile</h1>
+
+  {% if messages %}
+    <div class="mb-6">
+      {% for message in messages %}
+        <div class="p-4 mb-3 rounded 
+          {% if message.tags == 'error' %}bg-red-100 text-red-700
+          {% elif message.tags == 'success' %}bg-green-100 text-green-700
+          {% else %}bg-gray-100 text-gray-700{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="space-y-8">
+    {% csrf_token %}
+
+    {# Display non-field errors #}
+    {% if form.non_field_errors %}
+      <div class="bg-red-100 text-red-700 p-3 rounded mb-4">
+        <ul>
+          {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <!-- Profile Picture Preview and Upload -->
+    <div class="flex flex-col items-center">
+      {% if request.user.profile_picture %}
+        <img src="{{ request.user.profile_picture.url }}" alt="Profile Picture" class="h-32 w-32 rounded-full object-cover border border-gray-300 mb-4" id="profilePicPreview" />
+      {% else %}
+        <img src="{% static 'images/default_avatar.png' %}" alt="Default Avatar" class="h-32 w-32 rounded-full object-cover border border-gray-300 mb-4" id="profilePicPreview" />
+      {% endif %}
+      <label for="{{ form.profile_picture.id_for_label }}" class="cursor-pointer px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-semibold">
+        Change Profile Picture
+      </label>
+      {{ form.profile_picture|add_class:"hidden" }}
+      {% for error in form.profile_picture.errors %}
+        <p class="text-red-600 text-sm mt-1">{{ error }}</p>
+      {% endfor %}
+    </div>
+
+    <div>
+      <label for="{{ form.first_name.id_for_label }}" class="block mb-2 font-semibold text-gray-700">First Name</label>
+      {{ form.first_name|add_class:"w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" }}
+      {% for error in form.first_name.errors %}
+        <p class="text-red-600 text-sm mt-1">{{ error }}</p>
+      {% endfor %}
+    </div>
+
+    <div>
+      <label for="{{ form.last_name.id_for_label }}" class="block mb-2 font-semibold text-gray-700">Last Name</label>
+      {{ form.last_name|add_class:"w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" }}
+      {% for error in form.last_name.errors %}
+        <p class="text-red-600 text-sm mt-1">{{ error }}</p>
+      {% endfor %}
+    </div>
+
+    <div>
+      <label for="{{ form.department.id_for_label }}" class="block mb-2 font-semibold text-gray-700">Department</label>
+      {{ form.department|add_class:"w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" }}
+      {% for error in form.department.errors %}
+        <p class="text-red-600 text-sm mt-1">{{ error }}</p>
+      {% endfor %}
+    </div>
+
+    <div>
+      <label for="{{ form.phone_number.id_for_label }}" class="block mb-2 font-semibold text-gray-700">Phone Number</label>
+      {{ form.phone_number|add_class:"w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" }}
+      {% for error in form.phone_number.errors %}
+        <p class="text-red-600 text-sm mt-1">{{ error }}</p>
+      {% endfor %}
+    </div>
+
+    <div>
+      <label for="{{ form.address.id_for_label }}" class="block mb-2 font-semibold text-gray-700">Address</label>
+      {{ form.address|add_class:"w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" }}
+      {% for error in form.address.errors %}
+        <p class="text-red-600 text-sm mt-1">{{ error }}</p>
+      {% endfor %}
+    </div>
+
+    <button type="submit" class="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold shadow-md">
+      Save Changes
+    </button>
+  </form>
+
+  <div class="mt-8 text-center">
+    <a href="{% url 'lecturer:dashboard' %}" class="text-blue-600 hover:underline font-medium">
+      &larr; Back to Dashboard
+    </a>
+  </div>
+
+</div>
+
+<script>
+  // Preview profile picture before upload
+  const profileInput = document.getElementById('{{ form.profile_picture.id_for_label }}');
+  const profilePreview = document.getElementById('profilePicPreview');
+
+  if (profileInput) {
+    profileInput.addEventListener('change', function() {
+      const [file] = profileInput.files;
+      if (file) {
+        profilePreview.src = URL.createObjectURL(file);
+      }
+    });
+  }
+</script>
+{% endblock %}

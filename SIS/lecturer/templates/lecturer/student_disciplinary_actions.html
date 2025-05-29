@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}{{ student.get_full_name }} - Disciplinary Actions{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Disciplinary Actions for {{ student.get_full_name }}</h1>
+
+<a href="{% url 'lecturer:student_full_details' student.id %}" class="text-purple-600 hover:underline mb-6 inline-block">&larr; Back to Student Details</a>
+
+{% if disciplinary_actions %}
+  <ul class="list-disc pl-6 space-y-3">
+    {% for action in disciplinary_actions %}
+      <li>
+        <strong>{{ action.action }}</strong> — <em>{{ action.date|date:"M d, Y" }}</em>
+        {% if action.description %}
+          <p class="text-gray-700 ml-4">{{ action.description }}</p>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No disciplinary actions recorded for this student.</p>
+{% endif %}
+{% endblock %}

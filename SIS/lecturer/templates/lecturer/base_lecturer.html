@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% block page_title %}Lecturer{% endblock %}{% endblock %}
+
+{% block content %}
+<div class="flex min-h-screen bg-gray-100 font-sans text-gray-800">
+
+  <!-- Sidebar Navigation -->
+  <aside class="w-72 bg-white border-r border-gray-200 flex flex-col justify-between py-8 px-6 shadow-lg fixed inset-y-0 left-0 z-40 hidden md:flex">
+    <div>
+      <div class="flex items-center space-x-3 mb-12">
+        <img src="{% static 'images/breyer.jpg' %}" alt="Breyer Logo" class="h-12 w-auto rounded-lg shadow-md" />
+      </div>
+      <nav class="space-y-3" aria-label="Primary">
+        <button id="nav-profile" onclick="showTab('profile')" class="w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors duration-300 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500" aria-current="page">Profile</button>
+        <button id="nav-classes" onclick="showTab('classes')" class="w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors duration-300 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500">Classes</button>
+        <button id="nav-calendar" onclick="showTab('calendar')" class="w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors duration-300 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500">Calendar</button>
+      </nav>
+    </div>
+    <form method="post" action="{% url 'lecturer:logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="w-full py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-red-500">Logout</button>
+    </form>
+  </aside>
+
+  <!-- Mobile Sidebar Overlay -->
+  <div id="mobileSidebar" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden md:hidden" aria-hidden="true" onclick="toggleMobileSidebar()"></div>
+
+  <!-- Mobile Sidebar Panel -->
+  <aside id="mobileSidebarPanel" class="fixed inset-y-0 left-0 w-72 bg-white shadow-lg z-60 transform -translate-x-full transition-transform duration-300 md:hidden" aria-label="Mobile sidebar">
+    <div class="flex flex-col h-full py-8 px-6">
+      <div class="flex items-center space-x-3 mb-12">
+        <img src="{% static 'images/breyer.jpg' %}" alt="Breyer Logo" class="h-12 w-auto rounded-lg shadow-md" />
+      </div>
+      <nav class="space-y-3 flex-grow" aria-label="Primary">
+        <button onclick="showTab('profile'); toggleMobileSidebar()" class="w-full text-left px-4 py-3 rounded-lg font-semibold hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500">Profile</button>
+        <button onclick="showTab('classes'); toggleMobileSidebar()" class="w-full text-left px-4 py-3 rounded-lg font-semibold hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500">Classes</button>
+        <button onclick="showTab('calendar'); toggleMobileSidebar()" class="w-full text-left px-4 py-3 rounded-lg font-semibold hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500">Calendar</button>
+      </nav>
+      <form method="post" action="{% url 'lecturer:logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="w-full py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 mt-auto">Logout</button>
+      </form>
+    </div>
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <div class="flex-1 flex flex-col md:ml-72">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-30 bg-white shadow-md flex items-center justify-between px-8 py-5 border-b border-gray-200">
+      <div class="flex items-center space-x-4">
+        <button class="md:hidden text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 rounded" aria-label="Open menu" onclick="toggleMobileSidebar()">
+          <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <path d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <h1 class="text-3xl font-extrabold text-purple-700 select-none">
+          Welcome, {{ request.user.get_full_name|default:request.user.email }}!
+        </h1>
+      </div>
+
+      <div class="flex items-center space-x-6">
+
+        <!-- Notifications -->
+        <div class="relative">
+          <button id="notifBtn" type="button" onclick="toggleDropdown('notifDropdown')" class="relative focus:outline-none focus:ring-2 focus:ring-purple-500 rounded" aria-label="Show notifications" aria-expanded="false" aria-controls="notifDropdown">
+            <svg class="h-7 w-7 text-purple-700" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-5-5.917V5a2 2 0 10-4 0v.083A6 6 0 004 11v3.159c0 .538-.214 1.055-.595 1.436L2 17h5m7 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            {% if notifications_unread_count > 0 %}
+              <span class="absolute top-0 right-0 block w-2.5 h-2.5 bg-red-600 rounded-full ring-2 ring-white"></span>
+            {% endif %}
+          </button>
+          <div id="notifDropdown" class="hidden absolute right-0 mt-2 w-96 max-h-80 overflow-y-auto rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="notifBtn" tabindex="-1">
+            <div class="py-2">
+              {% if notifications %}
+                {% for notif in notifications %}
+                  <div class="px-5 py-3 border-b last:border-b-0 border-gray-200 hover:bg-purple-50 cursor-pointer" role="menuitem" tabindex="-1">
+                    <p class="text-sm text-gray-700">{{ notif.message }}</p>
+                    <time class="text-xs text-gray-400 block mt-1" datetime="{{ notif.created_at|date:'c' }}">{{ notif.created_at|date:"M d, Y H:i" }}</time>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <p class="text-center text-gray-500 py-6">No new notifications</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile Dropdown -->
+        <div class="relative">
+          <button id="profileBtn" type="button" onclick="toggleDropdown('profileDropdown')" class="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-purple-500 rounded" aria-label="Show profile menu" aria-expanded="false" aria-controls="profileDropdown">
+            <img src="{% static 'images/default_avatar.png' %}" alt="Profile" class="h-9 w-9 rounded-full border-2 border-purple-500 object-cover" />
+            <span class="hidden md:inline font-semibold text-purple-700 select-none">{{ request.user.get_full_name|default:"User" }}</span>
+            <svg class="h-4 w-4 text-purple-700" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <path d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="profileBtn" tabindex="-1">
+            <a href="{% url 'lecturer:profile' %}" class="block px-5 py-3 text-gray-700 hover:bg-purple-50 transition-colors duration-200" role="menuitem" tabindex="-1">View Profile</a>
+            <a href="{% url 'lecturer:profile_update' %}" class="block px-5 py-3 text-gray-700 hover:bg-purple-50 transition-colors duration-200" role="menuitem" tabindex="-1">Edit Profile</a>
+          </div>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto p-8 max-w-7xl mx-auto">
+      {% block dashboard_content %}
+      <!-- Dashboard content will go here -->
+      {% endblock %}
+    </main>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+  // Tab switching with localStorage persistence
+  function showTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    var el = document.getElementById('tab-content-' + tab);
+    if (el) el.classList.remove('hidden');
+    localStorage.setItem('lecturerDashboardTab', tab);
+
+    // Update sidebar active state
+    ['profile','classes','calendar'].forEach(t => {
+      let btn = document.getElementById('nav-' + t);
+      if (btn) btn.classList.toggle('bg-purple-100', t === tab);
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    let lastTab = localStorage.getItem('lecturerDashboardTab') || 'profile';
+    showTab(lastTab);
+  });
+
+  // Sidebar mobile toggle
+  function toggleMobileSidebar() {
+    let sidebar = document.getElementById('mobileSidebarPanel');
+    let overlay = document.getElementById('mobileSidebar');
+    let open = sidebar.classList.contains('-translate-x-full');
+    sidebar.classList.toggle('-translate-x-full');
+    overlay.classList.toggle('hidden');
+  }
+
+  // Dropdown logic (notifications, profile, student actions)
+  function toggleDropdown(id, btn) {
+    document.querySelectorAll('.absolute[role="menu"]').forEach(el => {
+      if (el.id !== id) el.classList.add('hidden');
+    });
+    let dd = document.getElementById(id);
+    if (dd) dd.classList.toggle('hidden');
+    if (btn) btn.setAttribute('aria-expanded', dd && !dd.classList.contains('hidden'));
+    document.addEventListener('click', function handler(e) {
+      if (!dd.contains(e.target) && (!btn || !btn.contains(e.target))) {
+        dd.classList.add('hidden');
+        document.removeEventListener('click', handler);
+      }
+    });
+  }
+
+  // Accordion logic for course panels
+  function toggleCoursePanel(id, btn) {
+    let panel = document.getElementById('course-panel-' + id);
+    let expanded = !panel.classList.contains('hidden');
+    document.querySelectorAll('[id^="course-panel-"]').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('button[aria-controls^="course-panel-"]').forEach(b => b.setAttribute('aria-expanded', 'false'));
+    if (!expanded) {
+      panel.classList.remove('hidden');
+      btn.setAttribute('aria-expanded', 'true');
+    }
+  }
+
+  // Student search (searches all students in all courses)
+  function filterStudents() {
+    let query = document.getElementById('studentSearch').value.toLowerCase();
+    document.querySelectorAll('.student-row').forEach(row => {
+      let data = row.getAttribute('data-student').toLowerCase();
+      row.style.display = data.includes(query) ? '' : 'none';
+    });
+  }
+</script>
+{% endblock %}
+{% endblock %}

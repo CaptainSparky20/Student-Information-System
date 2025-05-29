@@ -1,0 +1,135 @@
+{% extends 'lecturer/base_lecturer.html' %}
+{% load widget_tweaks %}
+{% load static %}
+
+{% block page_title %}Lecturer Dashboard{% endblock %}
+
+{% block dashboard_content %}
+
+<!-- Dashboard Stats -->
+<section class="grid grid-cols-1 sm:grid-cols-3 gap-8 p-8 bg-gray-50 border-b border-gray-200 shadow-inner">
+  <div class="bg-white rounded-xl shadow-md p-8 flex flex-col items-center justify-center border-t-4 border-purple-600">
+    <span class="text-5xl font-extrabold text-purple-700">{{ courses_data|length }}</span>
+    <span class="mt-2 text-gray-600 uppercase tracking-wide font-semibold">Courses</span>
+  </div>
+  <div class="bg-white rounded-xl shadow-md p-8 flex flex-col items-center justify-center border-t-4 border-purple-600">
+    <span class="text-5xl font-extrabold text-purple-700">{{ total_students }}</span>
+    <span class="mt-2 text-gray-600 uppercase tracking-wide font-semibold">Total Students</span>
+  </div>
+  <div class="bg-white rounded-xl shadow-md p-8 flex flex-col items-center justify-center border-t-4 border-purple-600">
+    <span class="text-5xl font-extrabold text-purple-700">{{ average_attendance }}</span>
+    <span class="mt-2 text-gray-600 uppercase tracking-wide font-semibold">Avg. Attendance (%)</span>
+  </div>
+</section>
+
+<!-- Main Content -->
+<!-- Profile Tab -->
+<section id="tab-content-profile" class="tab-content space-y-6">
+  <div class="bg-purple-700 bg-opacity-95 rounded-2xl shadow-lg text-white p-10 max-w-3xl mx-auto">
+    <h2 class="text-3xl font-extrabold mb-6 tracking-wide">Your Profile</h2>
+    <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 text-lg">
+      <div>
+        <dt class="font-semibold uppercase tracking-wider text-purple-300">Name</dt>
+        <dd class="mt-1">{{ request.user.get_full_name|default:"N/A" }}</dd>
+      </div>
+      <div>
+        <dt class="font-semibold uppercase tracking-wider text-purple-300">Email</dt>
+        <dd class="mt-1">{{ request.user.email }}</dd>
+      </div>
+      <div>
+        <dt class="font-semibold uppercase tracking-wider text-purple-300">Department</dt>
+        <dd class="mt-1">{{ request.user.department|default:"Not set" }}</dd>
+      </div>
+      <div>
+        <dt class="font-semibold uppercase tracking-wider text-purple-300">Phone</dt>
+        <dd class="mt-1">{{ request.user.phone_number|default:"Not set" }}</dd>
+      </div>
+      <div class="md:col-span-2">
+        <dt class="font-semibold uppercase tracking-wider text-purple-300">Address</dt>
+        <dd class="mt-1">{{ request.user.address|default:"Not set" }}</dd>
+      </div>
+    </dl>
+    <a href="{% url 'lecturer:profile_update' %}" class="inline-block mt-8 px-8 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-semibold shadow-lg transition duration-300">Edit Profile</a>
+  </div>
+</section>
+
+<!-- Classes Tab -->
+<section id="tab-content-classes" class="tab-content hidden space-y-10">
+  <div class="max-w-3xl mx-auto">
+    <input type="text" id="studentSearch" onkeyup="filterStudents()" placeholder="Search students by name or email..." aria-label="Search students" class="w-full px-5 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition" />
+  </div>
+  {% if courses_data %}
+    <div class="space-y-8 max-w-7xl mx-auto">
+      {% for item in courses_data %}
+        <article class="bg-white rounded-2xl shadow-lg border-t-4 border-purple-600 overflow-hidden">
+          <button type="button" aria-expanded="false" aria-controls="course-panel-{{ item.course.id }}" class="w-full flex justify-between items-center px-8 py-5 bg-purple-700 hover:bg-purple-800 focus:outline-none focus:ring-4 focus:ring-purple-500 transition-colors duration-300 text-white font-semibold text-xl tracking-wide" onclick="toggleCoursePanel('{{ item.course.id }}', this)">
+            <span>{{ item.course.name }} <span class="text-purple-300 text-lg font-normal">({{ item.course.code }})</span></span>
+            <svg class="h-6 w-6 transform transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <path d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div id="course-panel-{{ item.course.id }}" class="p-8 space-y-6 hidden bg-purple-50">
+            {% if item.students_info %}
+              <div class="grid md:grid-cols-2 gap-8">
+                {% for info in item.students_info %}
+                  <div class="bg-white rounded-xl shadow-md p-6 student-row relative" tabindex="0" aria-label="Student {{ info.student.user.get_full_name|default:info.student.user.email }}" data-student="{{ info.student.user.get_full_name|default:'' }} {{ info.email }}">
+                    <div class="flex justify-between items-start">
+                      <div>
+                        <h3 class="text-purple-800 font-bold text-xl">{{ info.student.user.get_full_name|default:info.student.user.email }}</h3>
+                        <p class="text-gray-500 text-sm">{{ info.email }}</p>
+                        <p class="text-gray-400 text-xs mt-1">Enrolled: {{ info.date_enrolled|date:"M d, Y" }}</p>
+                      </div>
+                      <div class="relative">
+                        <button type="button" aria-haspopup="true" aria-expanded="false" aria-controls="student-actions-{{ info.enrollment.id }}" onclick="toggleDropdown('student-actions-{{ info.enrollment.id }}', this)" class="px-3 py-1 bg-purple-200 text-purple-700 rounded-lg font-semibold hover:bg-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-500 transition">Actions ▼</button>
+                        <div id="student-actions-{{ info.enrollment.id }}" class="hidden absolute right-0 mt-2 w-80 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 p-5 space-y-4" role="menu" aria-label="Actions for {{ info.student.user.get_full_name|default:info.student.user.email }}">
+                          <!-- Mark Attendance Form -->
+                          <form method="post" action="{% url 'lecturer:mark_attendance' %}" class="space-y-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="enrollment" value="{{ info.enrollment.id }}">
+                            <label class="block font-semibold text-purple-700">Mark Attendance</label>
+                            <div class="flex items-center space-x-3">
+                              <input type="date" name="date" required class="flex-grow rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                              <label class="flex items-center space-x-2 text-gray-700">
+                                <input type="checkbox" name="present" checked class="h-5 w-5 rounded border-gray-300 focus:ring-purple-500" />
+                                <span>Present</span>
+                              </label>
+                              <button type="submit" name="mark_attendance" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">Save</button>
+                            </div>
+                          </form>
+                          <!-- Add Grade Form -->
+                          <form method="post" action="{% url 'lecturer:add_grade' %}" class="space-y-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="enrollment" value="{{ info.enrollment.id }}">
+                            <label class="block font-semibold text-purple-700">Add Grade</label>
+                            <div class="flex items-center space-x-3">
+                              <input type="text" name="grade" placeholder="Grade" required class="flex-grow rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                              <button type="submit" name="add_grade" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Save</button>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="text-gray-500 italic">No students enrolled in this course.</p>
+            {% endif %}
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-center text-gray-500 py-10">You are not assigned to any courses yet.</p>
+  {% endif %}
+</section>
+
+<!-- Calendar Tab -->
+<section id="tab-content-calendar" class="tab-content hidden space-y-6">
+  <div class="bg-white rounded-2xl shadow-lg p-10 max-w-4xl mx-auto">
+    <h2 class="text-3xl font-extrabold mb-6 text-purple-700 tracking-wide">Calendar</h2>
+    <p class="text-gray-600">Coming soon: Your teaching calendar and schedule will appear here.</p>
+  </div>
+</section>
+
+{% endblock %}

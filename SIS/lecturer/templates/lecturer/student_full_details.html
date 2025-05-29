@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}{{ student.get_full_name }} - Full Details{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Full Details of {{ student.get_full_name }}</h1>
+
+<a href="{% url 'lecturer:dashboard' %}" class="text-purple-600 hover:underline mb-6 inline-block">&larr; Back to Dashboard</a>
+
+<div class="mb-6">
+  {% if student.profile_picture %}
+    <img src="{{ student.profile_picture.url }}" alt="Profile Picture" class="h-32 w-32 rounded-full object-cover mb-4 border border-gray-300" />
+  {% else %}
+    <img src="{% static 'images/default_avatar.png' %}" alt="Default Avatar" class="h-32 w-32 rounded-full object-cover mb-4 border border-gray-300" />
+  {% endif %}
+  
+  <p><strong>Email:</strong> {{ student.email }}</p>
+  <p><strong>Phone Number:</strong> {{ student.phone_number|default:"Not provided" }}</p>
+  <p><strong>Address:</strong> {{ student.address|default:"Not provided" }}</p>
+  <p><strong>Department:</strong> {{ student.department|default:"Not provided" }}</p>
+  <p><strong>Latest Activity:</strong> 
+    {% if student.latest_activity %}
+      {{ student.latest_activity|date:"M d, Y H:i" }}
+    {% else %}
+      No activity recorded
+    {% endif %}
+  </p>
+</div>
+
+<div class="space-x-4">
+  <a href="{% url 'lecturer:student_achievements' student.id %}" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">View Achievements</a>
+  <a href="{% url 'lecturer:student_disciplinary_actions' student.id %}" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition">View Disciplinary Actions</a>
+  <a href="{% url 'lecturer:update_student_activity' student.id %}" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Update Latest Activity</a>
+</div>
+
+{% endblock %}

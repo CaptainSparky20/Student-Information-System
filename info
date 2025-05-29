@@ -1,0 +1,21 @@
+site admin username = cyborg
+site admin password = password123
+
+hafiz@gmail.com
+hafizcqbreyer123
+
+############################
+
+
+Account creation test
+
+from accounts.models import CustomUser
+
+# Create a student user
+student = CustomUser.objects.create_user(username='alesya', password='password123', role=CustomUser.Role.STUDENT)
+
+# Create a lecturer user
+lecturer = CustomUser.objects.create_user(username='hafiz', password='password123', role=CustomUser.Role.LECTURER)
+
+# Create an admin user
+admin = CustomUser.objects.create_user(username='zirah', password='password123', role=CustomUser.Role.ADMIN)

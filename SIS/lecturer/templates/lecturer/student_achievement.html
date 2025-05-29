@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}{{ student.get_full_name }} - Achievements{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Achievements of {{ student.get_full_name }}</h1>
+
+<a href="{% url 'lecturer:student_full_details' student.id %}" class="text-purple-600 hover:underline mb-6 inline-block">&larr; Back to Student Details</a>
+
+{% if achievements %}
+  <ul class="list-disc pl-6 space-y-3">
+    {% for achievement in achievements %}
+      <li>
+        <strong>{{ achievement.title }}</strong> — <em>{{ achievement.date_awarded|date:"M d, Y" }}</em>
+        {% if achievement.description %}
+          <p class="text-gray-700 ml-4">{{ achievement.description }}</p>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No achievements recorded for this student.</p>
+{% endif %}
+{% endblock %}

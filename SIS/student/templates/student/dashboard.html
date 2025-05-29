@@ -1,0 +1,66 @@
+{% extends 'student/base_student.html' %}
+{% load static %}
+
+{% block page_title %}Student Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<!-- Profile Tab -->
+<section id="profile-tab" class="tab-content block bg-purple-700 bg-opacity-90 p-6 rounded-lg shadow-lg text-white max-w-4xl mx-auto">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-semibold drop-shadow">Your Profile</h2>
+    <div id="datetime" class="text-sm select-none drop-shadow"></div>
+  </div>
+  <dl class="grid grid-cols-1 gap-y-3">
+    <div><dt class="font-semibold">Name:</dt> <dd>{{ request.user.get_full_name|default:"N/A" }}</dd></div>
+    <div><dt class="font-semibold">Email:</dt> <dd>{{ request.user.email }}</dd></div>
+    <div><dt class="font-semibold">Student ID:</dt> <dd>{{ request.user.student_id|default:"Not set" }}</dd></div>
+    <div><dt class="font-semibold">Phone:</dt> <dd>{{ request.user.phone_number|default:"Not set" }}</dd></div>
+    <div><dt class="font-semibold">Address:</dt> <dd>{{ request.user.address|default:"Not set" }}</dd></div>
+    <div><dt class="font-semibold">Department:</dt> <dd>{{ request.user.department|default:"Not set" }}</dd></div>
+    <div><dt class="font-semibold">Enrolled Since:</dt> <dd>{{ request.user.date_joined|date:"M d, Y" }}</dd></div>
+  </dl>
+  <a href="{% url 'student:profile_update' %}" 
+     class="inline-block mt-6 px-5 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-semibold transition">
+    Edit Profile
+  </a>
+</section>
+
+<!-- Enrollment Tab -->
+<section id="enrollment-tab" class="tab-content hidden max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+  {% if courses_data %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for item in courses_data %}
+        <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition p-6 flex flex-col justify-between border border-gray-200">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ item.course.name }} ({{ item.course.code }})</h3>
+            <p class="text-sm text-gray-600 mb-4">Attendance: <span class="font-semibold">{{ item.attendance_percentage }}%</span></p>
+            <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-4" aria-label="Attendance progress">
+              <div class="bg-green-500 h-3"
+                   style="width: {{ item.attendance_percentage }}%; {% if item.attendance_percentage > 0 %}min-width: 10px;{% endif %}">
+              </div>
+            </div>
+            <h4 class="font-semibold text-gray-800 mb-2">Grades:</h4>
+            {% if item.grades %}
+              <ul class="list-disc list-inside text-gray-700 text-sm space-y-1">
+                {% for grade in item.grades %}
+                  <li>{{ grade.subject_name }}: {{ grade.grade }}</li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="text-gray-500 text-sm">No grades available.</p>
+            {% endif %}
+          </div>
+          <div class="mt-6 text-right">
+            <a href="{% url 'student:attendance_detail' item.course.id %}" 
+               class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold underline">
+              View Attendance Details
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-center text-gray-600 mt-12">You are not enrolled in any courses.</p>
+  {% endif %}
+</section>
+{% endblock %}

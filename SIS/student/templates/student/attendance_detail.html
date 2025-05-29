@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Details - {{ course.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 bg-white bg-opacity-90 rounded-3xl shadow-2xl">
+
+  <h1 class="text-3xl font-bold mb-6 text-purple-700 select-none">
+    Attendance Details for {{ course.name }} ({{ course.code }})
+  </h1>
+
+  <!-- Attendance Summary -->
+  <div class="mb-6 p-4 bg-purple-100 rounded-lg text-purple-800 font-semibold space-y-1">
+    <p>Total Classes: {{ total_classes }}</p>
+    <p>Classes Attended: {{ attended_classes }}</p>
+    <p>Attendance Percentage: {{ attendance_percentage }}%</p>
+    <p>Absences: {{ absences }}</p>
+  </div>
+
+  <!-- Date Range Filter -->
+  <form method="get" class="mb-6 flex flex-wrap gap-4 items-center">
+    <label for="start_date" class="font-semibold text-gray-700">From:</label>
+    <input type="date" name="start_date" id="start_date" class="border rounded px-3 py-1" value="{{ request.GET.start_date }}">
+
+    <label for="end_date" class="font-semibold text-gray-700">To:</label>
+    <input type="date" name="end_date" id="end_date" class="border rounded px-3 py-1" value="{{ request.GET.end_date }}">
+
+    <button type="submit" class="bg-purple-700 text-white px-4 py-2 rounded hover:bg-purple-800 transition">
+      Filter
+    </button>
+  </form>
+
+  {% if attendance_records %}
+    <div class="overflow-x-auto">
+      <table class="w-full table-auto border-collapse border border-gray-300 text-center">
+        <thead>
+          <tr class="bg-purple-700 text-white">
+            <th class="border border-gray-300 px-4 py-2">Date</th>
+            <th class="border border-gray-300 px-4 py-2">Status</th>
+            <th class="border border-gray-300 px-4 py-2">Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in attendance_records %}
+            <tr class="odd:bg-gray-100 even:bg-white {% if not record.present %}bg-red-100 font-semibold{% endif %}">
+              <td class="border border-gray-300 px-4 py-2 whitespace-nowrap">
+                {{ record.date|date:"M d, Y" }}
+              </td>
+              <td class="border border-gray-300 px-4 py-2">
+                {% if record.present %}
+                  <span class="text-green-600" title="Present">&#10004;</span> Present
+                {% else %}
+                  <span class="text-red-600" title="Absent">&#10008;</span> Absent
+                {% endif %}
+              </td>
+              <td class="border border-gray-300 px-4 py-2 text-left">
+                {{ record.remarks|default:"-" }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-gray-600">No attendance records found for this course.</p>
+  {% endif %}
+
+  <div class="mt-6">
+    <a href="{% url 'student:dashboard' %}" class="text-purple-700 hover:underline">&larr; Back to Dashboard</a>
+  </div>
+  
+</div>
+{% endblock %}

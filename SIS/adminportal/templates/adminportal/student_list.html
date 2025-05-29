@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Students List{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-8 bg-white rounded-3xl shadow-lg mt-10">
+
+  <h1 class="text-3xl font-extrabold text-gray-900 mb-8 select-none">Students List</h1>
+
+  {% if students %}
+    <div class="overflow-x-auto">
+      <table class="min-w-full border border-gray-300 rounded-lg">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="border border-gray-300 px-4 py-2 text-left">ID</th>
+            <th class="border border-gray-300 px-4 py-2 text-left">Full Name</th>
+            <th class="border border-gray-300 px-4 py-2 text-left">Email</th>
+            <th class="border border-gray-300 px-4 py-2 text-left">Date Joined</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students %}
+            <tr class="odd:bg-white even:bg-gray-50">
+              <td class="border border-gray-300 px-4 py-2">{{ student.id }}</td>
+              <td class="border border-gray-300 px-4 py-2">{{ student.get_full_name }}</td>
+              <td class="border border-gray-300 px-4 py-2">{{ student.email }}</td>
+              <td class="border border-gray-300 px-4 py-2">{{ student.date_joined|date:"M d, Y" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-gray-600">No students found.</p>
+  {% endif %}
+
+</div>
+{% endblock %}
