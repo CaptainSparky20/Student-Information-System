@@ -4,14 +4,14 @@ from django.contrib import messages
 from accounts.decorators import role_required
 from accounts.models import CustomUser
 from accounts.forms import StudentProfileUpdateForm
-from core.models import Enrollment, Grade, Attendance, Course, Student
+from core.models import Enrollment, Grade, Attendance, Course, Student, DisciplinaryAction
 from django.utils.dateparse import parse_date
 from django.utils import timezone
 
 @role_required(CustomUser.Role.STUDENT)
 def student_dashboard(request):
     """
-    Student dashboard showing enrolled courses, grades, and attendance summary.
+    Student dashboard showing enrolled courses, grades, attendance summary, and disciplinary actions.
     Also updates latest activity timestamp.
     """
     # Update latest activity
@@ -23,14 +23,15 @@ def student_dashboard(request):
         pass
 
     enrollments = Enrollment.objects.filter(student__user=request.user).select_related('course')
-
     courses_data = []
+
     for enrollment in enrollments:
         course = enrollment.course
         grades = Grade.objects.filter(enrollment=enrollment)
         attendance_records = Attendance.objects.filter(enrollment=enrollment)
+        
         total_attendance = attendance_records.count()
-        present_attendance = attendance_records.filter(status='present').count()  # Updated for status field
+        present_attendance = attendance_records.filter(status='present').count()
         attendance_percentage = (present_attendance / total_attendance * 100) if total_attendance > 0 else 0
 
         courses_data.append({
@@ -39,11 +40,19 @@ def student_dashboard(request):
             'attendance_percentage': round(attendance_percentage, 2),
         })
 
+    # Get disciplinary actions for the student
+    try:
+        student = Student.objects.get(user=request.user)
+        disciplinary_actions = DisciplinaryAction.objects.filter(student=student).order_by('-date')
+    except Student.DoesNotExist:
+        disciplinary_actions = []
+
     context = {
         'courses_data': courses_data,
+        'disciplinary_actions': disciplinary_actions,
     }
-    return render(request, 'student/dashboard.html', context)
 
+    return render(request, 'student/dashboard.html', context)
 
 @role_required(CustomUser.Role.STUDENT)
 def attendance_detail(request, course_id):
@@ -69,7 +78,7 @@ def attendance_detail(request, course_id):
         attendance_qs = attendance_qs.filter(date__lte=end_date)
 
     total_classes = attendance_qs.count()
-    attended_classes = attendance_qs.filter(status='present').count()  # Updated for status field
+    attended_classes = attendance_qs.filter(status='present').count()
     absences = attendance_qs.filter(status='absent').count()
     attendance_percentage = (attended_classes / total_classes * 100) if total_classes > 0 else 0
 
@@ -81,8 +90,8 @@ def attendance_detail(request, course_id):
         'absences': absences,
         'attendance_percentage': round(attendance_percentage, 2),
     }
-    return render(request, 'student/attendance_detail.html', context)
 
+    return render(request, 'student/attendance_detail.html', context)
 
 @login_required
 @role_required(CustomUser.Role.STUDENT)
@@ -101,7 +110,6 @@ def student_profile(request):
     user = request.user
     return render(request, 'student/profile.html', {'user': user})
 
-
 @login_required
 @role_required(CustomUser.Role.STUDENT)
 def student_profile_update(request):
@@ -111,7 +119,7 @@ def student_profile_update(request):
     user = request.user
 
     if request.method == 'POST':
-        form = StudentProfileUpdateForm(request.POST, request.FILES, instance=user)  # Accept files
+        form = StudentProfileUpdateForm(request.POST, request.FILES, instance=user)
         if form.is_valid():
             form.save()
             messages.success(request, 'Your profile has been updated successfully.')
