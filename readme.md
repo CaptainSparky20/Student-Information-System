@@ -1,1 +1,0 @@
-Student information system project by cs4d

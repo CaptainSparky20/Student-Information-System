@@ -4,44 +4,41 @@
 {% block title %}Student Dashboard{% endblock %}
 
 {% block content %}
-<!-- Navigation Header -->
+<!-- Navigation Header with Logo and Date/Time -->
 <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 shadow-xl mb-8">
   <div class="flex justify-between items-center">
-    <!-- Left side - Dashboard title -->
-    <div class="flex items-center space-x-3">
-      <div class="bg-blue-600 rounded-lg p-2">
-        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2V7"></path>
-        </svg>
+    <!-- Left side - Logo and Dashboard title -->
+    <div class="flex items-center space-x-4">
+      <img src="{% static 'imagess/logo.png' %}" alt="Breyer Logo" class="h-12 w-auto">
+      <div>
+        <h1 class="text-2xl font-bold text-white">Student Dashboard</h1>
+        <p class="text-gray-300 text-sm">{{ request.user.get_full_name|default:request.user.email }}</p>
       </div>
-      <h1 class="text-2xl font-bold text-white">Student Dashboard</h1>
     </div>
 
-    <!-- Right side - Profile and logout -->
-    <div class="flex items-center space-x-4">
-      <!-- Profile Picture and Info -->
-      <div class="flex items-center space-x-3">
-        <div class="text-right">
-          <p class="text-white font-medium">{{ request.user.get_full_name|default:request.user.email }}</p>
-          <p class="text-gray-300 text-sm">{{ request.user.get_role_display }}</p>
-        </div>
-        
-        <!-- Profile Picture -->
-        <a href="{% url 'student:profile' %}" class="relative group">
-          {% if request.user.profile_picture %}
-            <img src="{{ request.user.profile_picture.url }}" alt="Profile Picture" 
-                 class="w-12 h-12 rounded-full object-cover border-2 border-white/20 group-hover:border-blue-400 transition-colors">
-          {% else %}
-            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center border-2 border-white/20 group-hover:border-blue-400 transition-colors">
-              <span class="text-white font-semibold text-lg">
-                {{ request.user.get_full_name|first|upper|default:request.user.email|first|upper }}
-              </span>
-            </div>
-          {% endif %}
-          <!-- Online indicator -->
-          <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-        </a>
+    <!-- Right side - Date/Time and Profile -->
+    <div class="flex items-center space-x-6">
+      <!-- Current Date and Time -->
+      <div class="text-right">
+        <p class="text-white font-medium">{% now "F j, Y" %}</p>
+        <p class="text-gray-300 text-sm">{% now "g:i A" %}</p>
       </div>
+      
+      <!-- Profile Picture -->
+      <a href="{% url 'student:profile' %}" class="relative group">
+        {% if request.user.profile_picture %}
+          <img src="{{ request.user.profile_picture.url }}" alt="Profile Picture" 
+               class="w-12 h-12 rounded-full object-cover border-2 border-white/20 group-hover:border-blue-400 transition-colors">
+        {% else %}
+          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center border-2 border-white/20 group-hover:border-blue-400 transition-colors">
+            <span class="text-white font-semibold text-lg">
+              {{ request.user.get_full_name|first|upper|default:request.user.email|first|upper }}
+            </span>
+          </div>
+        {% endif %}
+        <!-- Online indicator -->
+        <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+      </a>
 
       <!-- Logout Button -->
       <form action="{% url 'logout' %}" method="post" class="inline">
