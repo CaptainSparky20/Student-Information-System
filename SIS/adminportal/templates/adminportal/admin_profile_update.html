@@ -1,74 +1,148 @@
-{% extends 'base.html' %}
+{% extends 'adminportal/base_adminportal.html' %}
+{% load widget_tweaks %}
 {% load static %}
 
-{% block title %}Update Profile{% endblock %}
+{% block title %}Update Admin Profile{% endblock %}
 
-{% block content %}
-<div class="max-w-lg mx-auto p-10 bg-white rounded-3xl shadow-lg mt-12">
-
-  <h1 class="text-3xl font-extrabold text-gray-900 mb-10 select-none text-center">Update Your Profile</h1>
-
-  {% if messages %}
-    <div class="mb-6">
-      {% for message in messages %}
-        <div class="p-4 mb-3 rounded 
-          {% if message.tags == 'error' %}bg-red-100 text-red-700
-          {% elif message.tags == 'success' %}bg-green-100 text-green-700
-          {% else %}bg-gray-100 text-gray-700{% endif %}">
-          {{ message }}
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
-
-  <form method="post" class="space-y-8">
-    {% csrf_token %}
-
-    {# Render form fields manually for better control #}
-    <div>
-      <label for="{{ form.first_name.id_for_label }}" class="block mb-2 font-semibold text-gray-700">First Name</label>
-      {{ form.first_name }}
-      {% if form.first_name.errors %}
-        <p class="text-red-600 text-sm mt-1">{{ form.first_name.errors.0 }}</p>
-      {% endif %}
-    </div>
-
-    <div>
-      <label for="{{ form.last_name.id_for_label }}" class="block mb-2 font-semibold text-gray-700">Last Name</label>
-      {{ form.last_name }}
-      {% if form.last_name.errors %}
-        <p class="text-red-600 text-sm mt-1">{{ form.last_name.errors.0 }}</p>
-      {% endif %}
-    </div>
-
-    <div>
-      <label for="{{ form.email.id_for_label }}" class="block mb-2 font-semibold text-gray-700">Email</label>
-      {{ form.email }}
-      {% if form.email.errors %}
-        <p class="text-red-600 text-sm mt-1">{{ form.email.errors.0 }}</p>
-      {% endif %}
-    </div>
-
-    <div>
-      <label for="{{ form.department.id_for_label }}" class="block mb-2 font-semibold text-gray-700">Department</label>
-      {{ form.department }}
-      {% if form.department.errors %}
-        <p class="text-red-600 text-sm mt-1">{{ form.department.errors.0 }}</p>
-      {% endif %}
-    </div>
-
-    <button type="submit" class="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold shadow-md">
-      Save Changes
-    </button>
-  </form>
-
-  <div class="mt-8 text-center">
-    <a href="{% url 'adminportal:dashboard' %}" class="text-blue-600 hover:underline font-medium">
-      &larr; Back to Dashboard
-    </a>
+{% block adminportal_content %}
+<div class="max-w-4xl mx-auto space-y-8">
+  <!-- Header -->
+  <div class="text-center mb-8">
+    <h1 class="text-4xl font-bold text-white mb-2">Update Profile</h1>
+    <p class="text-xl text-gray-300">{{ request.user.email }}</p>
   </div>
 
+  <!-- Form Card -->
+  <div class="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 shadow-xl">
+    <form method="post" enctype="multipart/form-data" class="space-y-6" id="profile-form">
+      {% csrf_token %}
+
+      <!-- Profile Picture Preview and Actions -->
+      {% if form.profile_picture %}
+      <div class="text-center mb-8">
+        <div class="relative inline-block">
+          <span id="profile-picture-preview">
+            {% if request.user.profile_picture %}
+              <img src="{{ request.user.profile_picture.url }}" alt="Profile Picture" class="w-32 h-32 rounded-full object-cover border-4 border-white/20 shadow-lg">
+            {% else %}
+              <div class="w-32 h-32 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center border-4 border-white/20 shadow-lg">
+                <span class="text-white text-2xl">{{ request.user.get_full_name|first|default:"U"|upper }}</span>
+              </div>
+            {% endif %}
+          </span>
+          <div class="absolute bottom-0 right-0 bg-blue-600 rounded-full p-2 border-2 border-white shadow-lg">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="mt-4 flex flex-col sm:flex-row gap-2 justify-center items-center">
+          <label for="{{ form.profile_picture.id_for_label }}" class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors inline-block">
+            Change Photo
+          </label>
+          <input id="{{ form.profile_picture.id_for_label }}" name="{{ form.profile_picture.name }}"
+            type="file" class="hidden" accept="image/*">
+
+          <button type="button" id="clear-photo-btn"
+            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
+            title="Remove photo">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            Clear Photo
+          </button>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Form Fields -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for field in form %}
+          {% if field.name != 'profile_picture' %}
+          <div class="{% if field.name == 'address' %}md:col-span-2{% endif %}">
+            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
+              {{ field.label }}{% if field.field.required %}<span class="text-red-400">*</span>{% endif %}
+            </label>
+            {{ field|add_class:"w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" }}
+            {% for error in field.errors %}
+              <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+            {% endfor %}
+            {% if field.help_text %}
+              <p class="text-gray-400 text-sm mt-1">{{ field.help_text }}</p>
+            {% endif %}
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-white/20">
+        <button type="submit" class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 flex items-center justify-center">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          Update Profile
+        </button>
+        <a href="{% url 'adminportal:dashboard' %}" class="flex-1 bg-white/10 hover:bg-white/20 text-white font-medium py-3 px-6 rounded-lg text-center border border-white/20 flex items-center justify-center">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Profile Tips -->
+  <div class="bg-white/5 backdrop-blur-md rounded-xl p-6 border border-white/10">
+    <h3 class="text-lg font-semibold text-white mb-3">Profile Tips</h3>
+    <ul class="text-gray-300 text-sm space-y-2">
+      <li class="flex items-start">
+        <span class="w-4 h-4 mr-2 mt-1 text-blue-400">ℹ️</span>
+        Keep your admin profile updated for smooth communication and security.
+      </li>
+      <li class="flex items-start">
+        <span class="w-4 h-4 mr-2 mt-1 text-blue-400">📸</span>
+        Use a professional photo for better recognition.
+      </li>
+    </ul>
+  </div>
 </div>
 
-{# Add Tailwind form input styling via widget attrs in your form class for best results #}
+<script>
+const input = document.getElementById('{{ form.profile_picture.id_for_label }}');
+const clearBtn = document.getElementById('clear-photo-btn');
+const preview = document.getElementById('profile-picture-preview');
+
+if(input) {
+  input.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        if (preview.querySelector('img')) {
+          preview.querySelector('img').src = e.target.result;
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+}
+
+if(clearBtn && input) {
+  clearBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    input.value = "";
+    // Show fallback icon instead of the image
+    if (preview) {
+      preview.innerHTML = `
+        <div class="w-32 h-32 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center border-4 border-white/20 shadow-lg">
+          <span class="text-white text-2xl">{{ request.user.get_full_name|first|default:"U"|upper }}</span>
+        </div>
+      `;
+    }
+  });
+}
+</script>
 {% endblock %}

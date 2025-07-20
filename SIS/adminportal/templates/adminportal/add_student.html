@@ -1,61 +1,94 @@
-{% extends 'base.html' %}
+{% extends 'adminportal/base_adminportal.html' %}
 {% load static %}
 
 {% block title %}Add New Student{% endblock %}
 
-{% block content %}
-<div class="max-w-lg mx-auto p-8 bg-white rounded-3xl shadow-lg mt-10">
-
-  <a href="{% url 'adminportal:dashboard' %}"
-     class="inline-block mb-6 px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition font-semibold">
-    &larr; Back to Dashboard
-  </a>
-
-  <h1 class="text-3xl font-extrabold text-gray-900 mb-8 select-none">Add New Student</h1>
-
-  {% if messages %}
-    <div class="mb-6">
-      {% for message in messages %}
-        <div class="p-4 mb-2 rounded
-          {% if message.tags == 'error' %}bg-red-100 text-red-700
-          {% elif message.tags == 'success' %}bg-green-100 text-green-700
-          {% else %}bg-gray-100 text-gray-700{% endif %}">
-          {{ message }}
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
-
-  <form method="post" class="space-y-6">
+{% block adminportal_content %}
+<div class="max-w-3xl mx-auto bg-white/10 rounded-2xl p-8 border border-white/20 shadow-xl mt-10">
+  <h1 class="text-3xl font-bold text-white mb-6 text-center">Add New Student</h1>
+  <form method="post" enctype="multipart/form-data" class="space-y-6">
     {% csrf_token %}
-    <div>
-      <label for="first_name" class="block mb-2 font-semibold text-gray-700">First Name</label>
-      <input type="text" id="first_name" name="first_name" required
-             class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600" />
+
+    <!-- CustomUser Fields -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label class="block text-gray-300 mb-2 font-semibold">First Name<span class="text-red-400">*</span></label>
+        <input type="text" name="first_name" required class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-2 font-semibold">Last Name<span class="text-red-400">*</span></label>
+        <input type="text" name="last_name" required class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-2 font-semibold">Email<span class="text-red-400">*</span></label>
+        <input type="email" name="email" required class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-2 font-semibold">Password<span class="text-red-400">*</span></label>
+        <input type="password" name="password" required class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-2 font-semibold">Profile Picture</label>
+        <input type="file" name="profile_picture" accept="image/*" class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-2 font-semibold">Registration Number<span class="text-red-400">*</span></label>
+        <input type="text" name="registration_number" required class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500">
+      </div>
     </div>
 
+    <!-- Department Selection -->
     <div>
-      <label for="last_name" class="block mb-2 font-semibold text-gray-700">Last Name</label>
-      <input type="text" id="last_name" name="last_name" required
-             class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600" />
+      <label class="block text-gray-300 mb-2 font-semibold">Department<span class="text-red-400">*</span></label>
+      <select name="department" required class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 focus:ring-2 focus:ring-blue-500">
+        <option value="">Select Department</option>
+        {% for dept in departments %}
+          <option value="{{ dept.id }}">{{ dept.name }}</option>
+        {% endfor %}
+      </select>
     </div>
 
+    <!-- Lecturer Assignment -->
     <div>
-      <label for="email" class="block mb-2 font-semibold text-gray-700">Email</label>
-      <input type="email" id="email" name="email" required
-             class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600" />
+      <label class="block text-gray-300 mb-2 font-semibold">Assign Lecturer<span class="text-red-400">*</span></label>
+      <select name="lecturer" required class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 focus:ring-2 focus:ring-blue-500">
+        <option value="">Select Lecturer</option>
+        {% for lecturer in lecturers %}
+          <option value="{{ lecturer.id }}">{{ lecturer.get_full_name }}</option>
+        {% endfor %}
+      </select>
     </div>
 
+    <!-- Courses (Optional Multiple) -->
     <div>
-      <label for="password" class="block mb-2 font-semibold text-gray-700">Password</label>
-      <input type="password" id="password" name="password" required
-             class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600" />
+      <label class="block text-gray-300 mb-2 font-semibold">Assign to Courses (optional)</label>
+      <select name="courses" multiple class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 focus:ring-2 focus:ring-blue-500">
+        {% for course in courses %}
+          <option value="{{ course.id }}">{{ course.name }}</option>
+        {% endfor %}
+      </select>
+      <span class="text-gray-400 text-xs">Hold CTRL (Windows) or Command (Mac) to select multiple courses.</span>
     </div>
 
-    <button type="submit" class="w-full py-3 bg-green-600 text-white rounded hover:bg-green-700 transition font-semibold">
+    <!-- Other Student Details -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label class="block text-gray-300 mb-2 font-semibold">Phone Number</label>
+        <input type="text" name="phone_number" class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-2 font-semibold">Date of Birth</label>
+        <input type="date" name="date_of_birth" class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-gray-300 mb-2 font-semibold">Address</label>
+        <textarea name="address" rows="3" class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500"></textarea>
+      </div>
+    </div>
+
+    <button type="submit" class="w-full py-3 mt-8 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-lg transition-all text-lg">
       Add Student
     </button>
   </form>
-
 </div>
 {% endblock %}

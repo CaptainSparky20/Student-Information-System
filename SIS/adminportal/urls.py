@@ -15,6 +15,7 @@ urlpatterns = [
     path('dashboard/', views.admin_dashboard, name='dashboard'),
 
     # Admin profile update page
+    path('profile/', views.admin_profile, name='admin_profile'),
     path('profile/update/', views.admin_profile_update, name='profile_update'),
 
     # Lecturer management pages

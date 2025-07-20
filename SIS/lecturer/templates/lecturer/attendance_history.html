@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}View Past Attendance{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white/10 p-6 rounded-2xl border border-white/20 shadow-lg mt-10">
+    <h2 class="text-2xl font-semibold text-white mb-6 text-center">View Past Attendance</h2>
+    <form method="post" class="mb-6 flex flex-col md:flex-row gap-4 items-center justify-center">
+        {% csrf_token %}
+        <div>
+            {{ form.course.label_tag }}
+            {{ form.course }}
+            {% if form.course.errors %}
+                <p class="text-red-500 text-xs mt-1">{{ form.course.errors.0 }}</p>
+            {% endif %}
+        </div>
+        <div>
+            {{ form.date.label_tag }}
+            {{ form.date }}
+            {% if form.date.errors %}
+                <p class="text-red-500 text-xs mt-1">{{ form.date.errors.0 }}</p>
+            {% endif %}
+        </div>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold shadow transition-all duration-200">
+            View Attendance
+        </button>
+    </form>
+
+    {% if attendance_list is not None %}
+        <h3 class="text-lg text-white mb-3">
+            {{ selected_course.name }} on {{ selected_date }}
+        </h3>
+        {% if attendance_list %}
+            <div class="overflow-x-auto">
+                <table class="w-full table-auto bg-white/5 rounded-lg">
+                    <thead class="bg-white/10 text-white">
+                        <tr>
+                            <th class="p-3 text-left">Student</th>
+                            <th class="p-3 text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in attendance_list %}
+                        <tr>
+                            <td class="p-3 text-white">{{ entry.student.user.get_full_name }}</td>
+                            <td class="p-3 text-center">
+                                {% if entry.status == "present" %}
+                                    <span class="px-3 py-1 bg-green-500/80 text-white rounded-full">Present</span>
+                                {% elif entry.status == "absent" %}
+                                    <span class="px-3 py-1 bg-red-500/80 text-white rounded-full">Absent</span>
+                                {% else %}
+                                    <span class="px-3 py-1 bg-gray-400 text-white rounded-full">Not Marked</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center text-gray-200 mt-6">No students enrolled for this course.</div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

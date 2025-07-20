@@ -5,19 +5,6 @@ from accounts.decorators import role_required
 from accounts.models import CustomUser
 from .forms import AdminProfileForm, LecturerCreationForm
 
-# Disable old adminportal login by commenting it out to enforce unified login
-# def adminportal_login(request):
-#     if request.method == 'POST':
-#         email = request.POST.get('email')  # Use 'email' instead of 'username'
-#         password = request.POST.get('password')
-#         user = authenticate(request, username=email, password=password)  # username param is email
-#         if user is not None and user.role == CustomUser.Role.ADMIN:
-#             login(request, user)
-#             return redirect('adminportal:dashboard')
-#         else:
-#             messages.error(request, 'Invalid credentials.', extra_tags='login')
-#     return render(request, 'adminportal/login.html')
-
 @role_required(CustomUser.Role.ADMIN)
 def admin_dashboard(request):
     admin_user = request.user
@@ -38,6 +25,11 @@ def admin_dashboard(request):
         'profile_form': profile_form,
     }
     return render(request, 'adminportal/admin_dashboard.html', context)
+
+@role_required(CustomUser.Role.ADMIN)
+def admin_profile(request):
+    """Renders the admin's profile page with their details."""
+    return render(request, 'adminportal/profile.html', {'user': request.user})
 
 @role_required(CustomUser.Role.ADMIN)
 def admin_profile_update(request):

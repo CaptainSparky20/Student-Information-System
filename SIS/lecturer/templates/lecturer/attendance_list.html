@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}Take Attendance{% endblock %}
+{% load static %}
+
+{% block content %}
+
+<!-- Confirmation message area -->
+{% if messages %}
+  <div id="msg-confirm" class="mb-6">
+    {% for message in messages %}
+      <div class="bg-emerald-600/90 text-white rounded-lg shadow p-4 flex items-center justify-between animate-fade-in">
+        <span>{{ message }}</span>
+        <button onclick="this.parentElement.style.display='none'" class="ml-4 text-xl font-bold leading-none">&times;</button>
+      </div>
+    {% endfor %}
+  </div>
+  <script>
+    setTimeout(() => {
+      const msg = document.getElementById("msg-confirm");
+      if(msg) msg.style.display = 'none';
+    }, 3000);
+  </script>
+{% endif %}
+
+<div class="max-w-5xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl shadow-lg p-6 border border-white/20 mb-8">
+  <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+    <h2 class="text-2xl font-semibold text-white text-center sm:text-left">Take Attendance</h2>
+    <input
+      id="attendance-search"
+      type="text"
+      placeholder="Search by student or course..."
+      class="bg-white/20 text-white placeholder:text-gray-400 rounded px-3 py-2 border border-white/20 focus:outline-none focus:ring focus:ring-blue-500 w-full sm:w-72"
+    />
+  </div>
+
+  <form method="post" action="{% url 'lecturer:attendance_list' %}">
+    {% csrf_token %}
+    <div class="overflow-x-auto rounded-lg">
+      <table class="w-full table-auto border-collapse bg-white/5">
+        <thead class="bg-white/10 text-white">
+          <tr>
+            <th class="p-3 cursor-pointer" onclick="sortTable(0)">Student
+              <svg class="inline w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </th>
+            <th class="p-3 cursor-pointer" onclick="sortTable(1)">Course
+              <svg class="inline w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </th>
+            <th class="p-3 text-center">Present</th>
+            <th class="p-3 text-center">Absent</th>
+            <th class="p-3 text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody id="attendance-tbody" class="divide-y divide-white/10">
+          {% for enrollment in enrollments %}
+          <tr>
+            <td class="p-3 text-white">{{ enrollment.student.user.get_full_name }}</td>
+            <td class="p-3 text-white">{{ enrollment.course.name }}</td>
+            <td class="p-3 text-center">
+              <input type="radio" name="status_{{ enrollment.id }}" value="present" class="accent-green-600" id="present_{{ enrollment.id }}">
+            </td>
+            <td class="p-3 text-center">
+              <input type="radio" name="status_{{ enrollment.id }}" value="absent" class="accent-red-600" id="absent_{{ enrollment.id }}">
+            </td>
+            <td class="p-3 text-center">
+              <a href="{% url 'lecturer:mark_individual_attendance' enrollment.id %}"
+                 class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded transition duration-200">
+                Mark Individually
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center text-gray-300 p-6">No enrollments found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if enrollments %}
+    <div class="flex justify-end mt-6">
+      <button type="submit"
+        class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-semibold shadow transition-all duration-200">
+        Submit Attendance (Bulk)
+      </button>
+    </div>
+    {% endif %}
+  </form>
+</div>
+
+<script>
+  // Live search filter
+  document.getElementById("attendance-search").addEventListener("keyup", function () {
+    let value = this.value.toLowerCase();
+    document.querySelectorAll("#attendance-tbody tr").forEach(function (row) {
+      let student = row.children[0].innerText.toLowerCase();
+      let course = row.children[1].innerText.toLowerCase();
+      row.style.display = (student.includes(value) || course.includes(value)) ? "" : "none";
+    });
+  });
+
+  // Simple sort table function
+  function sortTable(col) {
+    const tbody = document.getElementById('attendance-tbody');
+    let rows = Array.from(tbody.querySelectorAll('tr')).filter(row => row.children.length > 1);
+    let asc = tbody.dataset.sortOrder !== "asc";
+    rows.sort((a, b) => {
+      let x = a.children[col].innerText.toLowerCase();
+      let y = b.children[col].innerText.toLowerCase();
+      if (x < y) return asc ? -1 : 1;
+      if (x > y) return asc ? 1 : -1;
+      return 0;
+    });
+    tbody.innerHTML = "";
+    rows.forEach(row => tbody.appendChild(row));
+    tbody.dataset.sortOrder = asc ? "asc" : "desc";
+  }
+</script>
+{% endblock %}
