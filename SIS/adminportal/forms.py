@@ -1,5 +1,8 @@
 from django import forms
 from accounts.models import CustomUser
+from django import forms
+from accounts.models import CustomUser
+from core.models import Department
 
 class AdminProfileForm(forms.ModelForm):
     class Meta:
@@ -26,13 +29,17 @@ class AdminProfileForm(forms.ModelForm):
         }
 
 class LecturerCreationForm(forms.ModelForm):
-    password = forms.CharField(
-        widget=forms.PasswordInput(attrs={
-            'class': 'w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-600',
-            'placeholder': 'Enter password',
-        }),
-        label='Password'
+    department = forms.ModelChoiceField(
+        queryset=Department.objects.all(),
+        required=True,
+        empty_label="Select Department"
     )
+    date_joined = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+
+    class Meta:
+        model = CustomUser
+        fields = ['first_name', 'last_name', 'email', 'phone_number', 'department', 'profile_picture', 'date_joined']
+
 
     class Meta:
         model = CustomUser

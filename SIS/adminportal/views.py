@@ -4,6 +4,7 @@ from django.contrib import messages
 from accounts.decorators import role_required
 from accounts.models import CustomUser
 from .forms import AdminProfileForm, LecturerCreationForm
+from core.models import Department
 
 @role_required(CustomUser.Role.ADMIN)
 def admin_dashboard(request):
@@ -55,18 +56,21 @@ def lecturer_list(request):
 
 @role_required(CustomUser.Role.ADMIN)
 def add_lecturer(request):
-    lecturer_form = LecturerCreationForm()
-
     if request.method == 'POST':
-        lecturer_form = LecturerCreationForm(request.POST)
-        if lecturer_form.is_valid():
-            lecturer_form.save()
+        form = LecturerCreationForm(request.POST, request.FILES)
+        if form.is_valid():
+            lecturer = form.save(commit=False)
+            lecturer.role = CustomUser.Role.LECTURER
+            lecturer.save()
             messages.success(request, "Lecturer added successfully.", extra_tags='lecturer')
             return redirect('adminportal:lecturer_list')
         else:
             messages.error(request, "Please correct the errors in the lecturer form.", extra_tags='lecturer')
+    else:
+        form = LecturerCreationForm()
 
-    return render(request, 'adminportal/add_lecturer.html', {'lecturer_form': lecturer_form})
+    return render(request, 'adminportal/add_lecturer.html', {'lecturer_form': form})
+
 
 @role_required(CustomUser.Role.ADMIN)
 def student_list(request):
@@ -97,3 +101,31 @@ def add_student(request):
             return redirect('adminportal:student_list')
 
     return render(request, 'adminportal/add_student.html')
+
+@role_required(CustomUser.Role.ADMIN)
+def add_lecturer(request):
+    if request.method == 'POST':
+        form = LecturerCreationForm(request.POST, request.FILES)
+        if form.is_valid():
+            lecturer = form.save(commit=False)
+            lecturer.role = CustomUser.Role.LECTURER
+            lecturer.save()
+            messages.success(request, "Lecturer added successfully.", extra_tags='lecturer')
+            return redirect('adminportal:lecturer_list')
+        else:
+            messages.error(request, "Please correct the errors in the lecturer form.", extra_tags='lecturer')
+    else:
+        form = LecturerCreationForm()
+
+    return render(request, 'adminportal/add_lecturer.html', {'lecturer_form': form})
+
+@role_required(CustomUser.Role.ADMIN)
+def add_lecturer(request):
+    departments = Department.objects.all()
+    if request.method == 'POST':
+        # ... (your form processing here)
+        pass
+    return render(request, 'adminportal/add_lecturer.html', {
+        'departments': departments,
+        # add other context vars if needed
+    })

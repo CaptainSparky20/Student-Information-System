@@ -111,3 +111,11 @@ class DisciplinaryAction(models.Model):
 
     def __str__(self):
         return f"{self.student}: {self.action} on {self.date}"
+    
+from django.db import models
+
+class Department(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name

@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models
+from core.models import Department
+from django.utils import timezone
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -35,11 +37,21 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=30, blank=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
-    department = models.CharField(max_length=100, blank=True, null=True)  # Added department field
+
+    department = models.ForeignKey(
+    Department,
+    null=True,
+    blank=True,
+    on_delete=models.SET_NULL,
+    related_name='users'
+)
+
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)  # Added profile_picture field
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
-    date_joined = models.DateTimeField(auto_now_add=True)
+    date_joined = models.DateTimeField(default=timezone.now, blank=True, null=True)
+
+
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
@@ -80,3 +92,5 @@ class Student(CustomUser):
         proxy = True
         verbose_name = 'Student'
         verbose_name_plural = 'Students'
+
+

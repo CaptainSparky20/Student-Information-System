@@ -50,3 +50,9 @@ class StudentAchievementAdmin(admin.ModelAdmin):
 class DisciplinaryActionAdmin(admin.ModelAdmin):
     list_display = ('student', 'action', 'date')
     list_filter = ('date',)
+
+
+from django.contrib import admin
+from .models import Department
+
+admin.site.register(Department)
