@@ -103,6 +103,17 @@ def add_student(request):
     return render(request, 'adminportal/add_student.html')
 
 @role_required(CustomUser.Role.ADMIN)
+def add_student(request):
+    departments = Department.objects.all()
+    if request.method == 'POST':
+        # ... (your form processing here)
+        pass
+    return render(request, 'adminportal/add_student.html', {
+        'departments': departments,
+        # add other context vars if needed
+    })
+
+@role_required(CustomUser.Role.ADMIN)
 def add_lecturer(request):
     if request.method == 'POST':
         form = LecturerCreationForm(request.POST, request.FILES)

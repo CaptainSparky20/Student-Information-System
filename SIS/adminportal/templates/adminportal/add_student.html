@@ -37,16 +37,13 @@
       </div>
     </div>
 
-    <!-- Department Selection -->
+     <!-- Department Selection -->
     <div>
-      <label class="block text-gray-300 mb-2 font-semibold">Department<span class="text-red-400">*</span></label>
-      <select name="department" required class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 focus:ring-2 focus:ring-blue-500">
-        <option value="">Select Department</option>
-        {% for dept in departments %}
-          <option value="{{ dept.id }}">{{ dept.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
+  <label class="block text-gray-300 mb-2 font-semibold">Department<span class="text-red-400">*</span></label>
+  <select
+    name="department"
+    required
+    class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 focus:ring-2 focus:ring-blue-500 appearance-none"
 
     <!-- Lecturer Assignment -->
     <div>
