@@ -15,6 +15,13 @@ from .forms import (
     AttendanceForm, MessageForm
 )
 from datetime import date
+from django.contrib.auth.decorators import login_required
+import csv
+from datetime import datetime
+from django.http import HttpResponse
+from core.models import Lecturer, Course, Enrollment, Attendance
+
+
 
 @role_required(CustomUser.Role.LECTURER)
 def lecturer_dashboard(request):
@@ -71,7 +78,7 @@ def lecturer_dashboard(request):
 
 
     average_attendance = round(sum(attendance_values) / len(attendance_values), 2) if attendance_values else 0
-    notifications = Notification.objects.filter(lecturer=request.user, is_read=False)
+    notifications = Notification.objects.filter(lecturers=request.user, is_read=False)
     notifications_unread_count = notifications.count()
 
     context = {
@@ -129,7 +136,7 @@ def mark_individual_attendance(request, enrollment_id):
 @role_required(CustomUser.Role.LECTURER)
 def attendance_list(request):
     lecturer = get_object_or_404(Lecturer, user=request.user)
-    courses = Course.objects.filter(lecturer=lecturer)
+    courses = Course.objects.filter(lecturers=lecturer)   # <-- FIX HERE
     enrollments = Enrollment.objects.filter(course__in=courses).select_related('student__user', 'course')
     today = date.today()
 
@@ -161,7 +168,7 @@ def attendance_list(request):
 def attendance_history(request):
     """View to list all past attendance taken by lecturer, grouped by date/course."""
     lecturer = get_object_or_404(Lecturer, user=request.user)
-    courses = Course.objects.filter(lecturer=lecturer)
+    courses = Course.objects.filter(lecturers=lecturer)
     attendances = Attendance.objects.filter(enrollment__course__in=courses).select_related('enrollment__student__user', 'enrollment__course').order_by('-date', 'enrollment__course', 'enrollment__student__user__last_name')
 
     context = {
@@ -253,12 +260,12 @@ class AttendanceHistoryFilterForm(forms.Form):
     def __init__(self, *args, **kwargs):
         lecturer = kwargs.pop('lecturer')
         super().__init__(*args, **kwargs)
-        self.fields['course'].queryset = Course.objects.filter(lecturer=lecturer)
+        self.fields['course'].queryset = Course.objects.filter(lecturers=lecturer)
 
 @role_required(CustomUser.Role.LECTURER)
 def attendance_history(request):
     lecturer = get_object_or_404(Lecturer, user=request.user)
-    courses = Course.objects.filter(lecturer=lecturer)
+    courses = Course.objects.filter(lecturers=lecturer)
     attendance_list = None
     selected_course = None
     selected_date = None
@@ -363,3 +370,55 @@ def student_list(request, course_id):
         key=lambda u: u.get_full_name().lower()
     )
     return render(request, 'lecturer/student_list.html', {'students': students, 'course': course})
+
+
+
+def export_attendance(request):
+    # Get course and date from GET parameters
+    course_id = request.GET.get('course')
+    date_str = request.GET.get('date')
+
+    # Security: Only allow for logged-in lecturers with this course
+    try:
+        lecturer = Lecturer.objects.get(user=request.user)
+    except Lecturer.DoesNotExist:
+        return HttpResponse("Not authorized", status=403)
+
+    course = Course.objects.filter(id=course_id, lecturers=lecturer).first()
+    if not course:
+        return HttpResponse("Course not found or access denied", status=404)
+
+    # Convert date string from dd-mm-yyyy to date object
+    try:
+        date_obj = datetime.strptime(date_str, "%d-%m-%Y").date()
+    except (ValueError, TypeError):
+        return HttpResponse("Invalid date format. Use dd-mm-yyyy.", status=400)
+
+    # Gather attendance records for the date
+    enrollments = Enrollment.objects.filter(course=course).select_related('student__user')
+    attendance_records = Attendance.objects.filter(
+        enrollment__in=enrollments, date=date_obj
+    ).select_related('enrollment__student__user')
+
+    # Prepare response
+    response = HttpResponse(content_type='text/csv')
+    filename = f"attendance_{course.code}_{date_obj.strftime('%d-%m-%Y')}.csv"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Student Name', 'Email', 'Status'])
+
+    # Build a dict: enrollment_id -> attendance
+    attendance_map = {a.enrollment_id: a for a in attendance_records}
+
+    for enrollment in enrollments:
+        student = enrollment.student.user
+        att = attendance_map.get(enrollment.id)
+        status = att.status if att else 'not marked'
+        writer.writerow([
+            student.get_full_name(),
+            student.email,
+            status.capitalize()
+        ])
+
+    return response

@@ -38,4 +38,6 @@ urlpatterns = [
     path('students/<int:student_id>/update-activity/', views.update_student_activity, name='update_student_activity'),
     path('students/<int:student_id>/full-details/', views.student_full_details, name='student_full_details'),
 
+    #export csv
+    path('attendance/export/', views.export_attendance, name='export_attendance'),
 ]

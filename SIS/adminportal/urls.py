@@ -29,6 +29,13 @@ urlpatterns = [
     path('students/', views.student_list, name='student_list'),
     path('students/add/', views.add_student, name='add_student'),
 
+    #Enroll students in courses
+    path('students/<int:pk>/enroll/', views.enroll_student, name='enroll_student'),
+
+
+    # Export students to CSV
+    path('students/export/', views.export_students, name='export_students'),
+
     #staff management pages
     path('staff/', views.staff_list, name='staff_list'),
     path('staff/add/', views.add_staff, name='add_staff'),

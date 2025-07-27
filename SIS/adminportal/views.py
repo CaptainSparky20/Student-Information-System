@@ -118,25 +118,26 @@ def export_lecturers(request):
 # ----- STUDENTS -----
 @role_required(CustomUser.Role.ADMIN)
 def student_list(request):
-    query = request.GET.get('q', '')
-    course_id = request.GET.get('course')
+    students = CustomUser.objects.filter(role=CustomUser.Role.STUDENT).select_related('department').order_by('first_name')
+
     department_id = request.GET.get('department')
-    students = CustomUser.objects.filter(role=CustomUser.Role.STUDENT)
-    if query:
-        students = students.filter(
-            Q(first_name__icontains=query) |
-            Q(last_name__icontains=query) |
-            Q(email__icontains=query)
-        )
+    course_id = request.GET.get('course')
+
     if department_id:
         students = students.filter(department_id=department_id)
+
     if course_id:
         students = students.filter(student__enrollment__course_id=course_id).distinct()
+
+    departments = Department.objects.all()
+    courses = Course.objects.all()
+
     return render(request, 'adminportal/student_list.html', {
         'students': students,
-        'courses': Course.objects.all(),
-        'departments': Department.objects.all(),
+        'departments': departments,
+        'courses': courses,
     })
+
 
 @role_required(CustomUser.Role.ADMIN)
 def add_student(request):
@@ -217,7 +218,47 @@ def student_edit(request, pk):
         'profile_form': profile_form,
         'user': user,
     })
+# ----- ENROLL STUDENT IN COURSE -----
+def enroll_student(request, pk):
+    student = get_object_or_404(Student, user_id=pk)
+    courses = Course.objects.all()
 
+    if request.method == "POST":
+        course_id = request.POST.get("course")
+        course = get_object_or_404(Course, id=course_id)
+        # Prevent duplicate enrollment
+        if Enrollment.objects.filter(student=student, course=course).exists():
+            messages.warning(request, f"{student.user.get_full_name()} is already enrolled in {course.name}.")
+        else:
+            Enrollment.objects.create(student=student, course=course)
+            messages.success(request, f"{student.user.get_full_name()} enrolled in {course.name} successfully.")
+        return redirect('adminportal:student_list')
+
+    return render(request, 'adminportal/enroll_student.html', {
+        'student': student,
+        'courses': courses,
+    })
+
+    # ----- STUDENT EXPORT -----
+def export_students(request):
+    students = CustomUser.objects.filter(role=CustomUser.Role.STUDENT).select_related('department')
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename=students.csv'
+    writer = csv.writer(response)
+    writer.writerow(['Name', 'Email', 'Department', 'Date Joined', 'Registration Number', 'Phone Number'])
+    for student in students:
+        department_name = student.department.name if student.department else '-'
+        reg_no = getattr(getattr(student, 'student', None), 'registration_number', '-')
+        phone = getattr(student, 'phone_number', '-')
+        writer.writerow([
+            student.get_full_name(),
+            student.email,
+            department_name,
+            student.date_joined.strftime('%Y-%m-%d'),
+            reg_no,
+            phone,
+        ])
+    return response
 # ----- STAFF -----
 @role_required(CustomUser.Role.ADMIN)
 def staff_list(request):
