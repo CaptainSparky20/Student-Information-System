@@ -1,39 +1,84 @@
-{% extends 'base.html' %}
+{% extends 'adminportal/base_adminportal.html' %}
 {% load static %}
 
-{% block title %}Students List{% endblock %}
+{% block title %}Student List{% endblock %}
 
-{% block content %}
-<div class="max-w-7xl mx-auto p-8 bg-white rounded-3xl shadow-lg mt-10">
+{% block adminportal_content %}
+<div class="max-w-7xl mx-auto mt-10 p-6 bg-white/10 rounded-2xl shadow-lg backdrop-blur border border-white/20">
+  <h1 class="text-3xl font-bold text-white mb-6">Student List</h1>
 
-  <h1 class="text-3xl font-extrabold text-gray-900 mb-8 select-none">Students List</h1>
+  <!-- Filter + Search -->
+  <form method="GET" class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+    <div class="flex flex-col md:flex-row gap-4 w-full">
+      <input type="text" name="q" placeholder="Search student name or email..." value="{{ request.GET.q }}"
+        class="w-full md:w-64 px-4 py-2 rounded-lg bg-white/10 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none transition" />
 
-  {% if students %}
-    <div class="overflow-x-auto">
-      <table class="min-w-full border border-gray-300 rounded-lg">
-        <thead class="bg-gray-100">
-          <tr>
-            <th class="border border-gray-300 px-4 py-2 text-left">ID</th>
-            <th class="border border-gray-300 px-4 py-2 text-left">Full Name</th>
-            <th class="border border-gray-300 px-4 py-2 text-left">Email</th>
-            <th class="border border-gray-300 px-4 py-2 text-left">Date Joined</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for student in students %}
-            <tr class="odd:bg-white even:bg-gray-50">
-              <td class="border border-gray-300 px-4 py-2">{{ student.id }}</td>
-              <td class="border border-gray-300 px-4 py-2">{{ student.get_full_name }}</td>
-              <td class="border border-gray-300 px-4 py-2">{{ student.email }}</td>
-              <td class="border border-gray-300 px-4 py-2">{{ student.date_joined|date:"M d, Y" }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <select name="course" class="w-full md:w-48 px-4 py-2 rounded-lg bg-white/10 text-white border border-white/20 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+        <option value="">All Courses</option>
+        {% for course in courses %}
+          <option value="{{ course.id }}" {% if request.GET.course == course.id|stringformat:"s" %}selected{% endif %}>{{ course.name }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="department" class="w-full md:w-48 px-4 py-2 rounded-lg bg-white/10 text-white border border-white/20 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+        <option value="">All Departments</option>
+        {% for dept in departments %}
+          <option value="{{ dept.id }}" {% if request.GET.department == dept.id|stringformat:"s" %}selected{% endif %}>{{ dept.name }}</option>
+        {% endfor %}
+      </select>
     </div>
-  {% else %}
-    <p class="text-gray-600">No students found.</p>
-  {% endif %}
 
+    <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition">Filter</button>
+  </form>
+
+  <!-- Table -->
+  <div class="overflow-x-auto">
+    <table class="min-w-full bg-white/5 border border-white/10 rounded-xl text-white">
+      <thead class="bg-white/10 text-left text-sm uppercase font-semibold">
+        <tr>
+          <th class="p-4">Profile</th>
+          <th class="p-4">Name</th>
+          <th class="p-4">Email</th>
+          <th class="p-4">Enrolled</th>
+          <th class="p-4">Course</th>
+          <th class="p-4">Department</th>
+          <th class="p-4 text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+        <tr class="border-t border-white/10 hover:bg-white/5 transition">
+          <td class="p-4">
+            {% if student.student.profile_picture %}
+              <img src="{{ student.student.profile_picture.url }}" alt="Profile" class="w-12 h-12 rounded-full object-cover border border-white/20">
+            {% else %}
+              <div class="w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center text-sm font-bold text-white">N/A</div>
+            {% endif %}
+          </td>
+          <td class="p-4 font-medium">
+            <a href="{% url 'adminportal:student_detail' student.id %}" class="text-blue-400 hover:underline">
+              {{ student.get_full_name }}
+            </a>
+          </td>
+          <td class="p-4">{{ student.email }}</td>
+          <td class="p-4">{{ student.date_joined|date:"Y-m-d" }}</td>
+          <td class="p-4">
+            {% with student.student.enrollment_set.all|first as enrollment %}
+              {{ enrollment.course.name }}
+            {% endwith %}
+          </td>
+          <td class="p-4">{{ student.department.name }}</td>
+          <td class="p-4 text-center">
+            <a href="{% url 'adminportal:student_edit' student.id %}" class="inline-block px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-sm text-white rounded-lg shadow transition">Edit</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="p-4 text-center text-gray-400">No students found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}

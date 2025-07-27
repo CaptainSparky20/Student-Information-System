@@ -1,0 +1,78 @@
+{% extends 'adminportal/base_adminportal.html' %}
+{% load static %}
+
+{% block title %}Add Staff{% endblock %}
+
+{% block adminportal_content %}
+<div class="max-w-2xl mx-auto bg-white/10 rounded-2xl p-8 border border-white/20 shadow-xl mt-10">
+  <h1 class="text-3xl font-bold text-white mb-6 text-center">Add New Staff</h1>
+  <form method="post" enctype="multipart/form-data" class="space-y-6">
+    {% csrf_token %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="p-4 mb-3 rounded 
+            {% if 'error' in message.tags %}bg-red-100 text-red-700
+            {% elif 'success' in message.tags %}bg-green-100 text-green-700
+            {% else %}bg-gray-100 text-gray-700{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label class="block text-gray-300 mb-2 font-semibold">Full Name<span class="text-red-400">*</span></label>
+        <input type="text" name="full_name" required class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500" placeholder="Full Name">
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-2 font-semibold">Short Name<span class="text-red-400">*</span></label>
+        <input type="text" name="short_name" required class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500" placeholder="Short Name">
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-2 font-semibold">Email<span class="text-red-400">*</span></label>
+        <input type="email" name="email" required class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500" placeholder="user@example.com">
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-2 font-semibold">Password<span class="text-red-400">*</span></label>
+        <input type="password" name="password" required class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-2 font-semibold">Confirm Password<span class="text-red-400">*</span></label>
+        <input type="password" name="confirm_password" required class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-2 font-semibold">Profile Picture</label>
+        <input type="file" name="profile_picture" accept="image/*" class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-2 font-semibold">Phone Number</label>
+        <input type="text" name="phone_number" class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500" placeholder="Phone Number">
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-gray-300 mb-2 font-semibold">Department<span class="text-red-400">*</span></label>
+      <select name="department" required class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 focus:ring-2 focus:ring-blue-500">
+        <option value="">Select Department</option>
+        {% for dept in departments %}
+          <option value="{{ dept.id }}">{{ dept.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-gray-300 mb-2 font-semibold">Date Joined<span class="text-red-400">*</span></label>
+      <input type="date" name="date_joined" required class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 focus:ring-2 focus:ring-blue-500">
+      <span class="text-gray-400 text-xs">Select the staff's join date.</span>
+    </div>
+    <div>
+      <label class="block text-gray-300 mb-2 font-semibold">Address</label>
+      <textarea name="address" rows="2" class="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500"></textarea>
+    </div>
+
+    <button type="submit" class="w-full py-3 mt-8 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-lg transition-all text-lg">
+      Add Staff
+    </button>
+  </form>
+</div>
+{% endblock %}

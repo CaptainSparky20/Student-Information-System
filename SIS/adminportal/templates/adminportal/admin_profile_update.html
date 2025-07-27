@@ -18,7 +18,6 @@
       {% csrf_token %}
 
       <!-- Profile Picture Preview and Actions -->
-      {% if form.profile_picture %}
       <div class="text-center mb-8">
         <div class="relative inline-block">
           <span id="profile-picture-preview">
@@ -26,35 +25,35 @@
               <img src="{{ request.user.profile_picture.url }}" alt="Profile Picture" class="w-32 h-32 rounded-full object-cover border-4 border-white/20 shadow-lg">
             {% else %}
               <div class="w-32 h-32 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center border-4 border-white/20 shadow-lg">
-                <span class="text-white text-2xl">{{ request.user.get_full_name|first|default:"U"|upper }}</span>
+                <span class="text-white text-3xl">{{ request.user.get_full_name|first|default:"U"|upper }}</span>
               </div>
             {% endif %}
           </span>
-          <div class="absolute bottom-0 right-0 bg-blue-600 rounded-full p-2 border-2 border-white shadow-lg">
-            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <label for="{{ form.profile_picture.id_for_label }}" class="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 rounded-full p-2 border-2 border-white shadow-lg cursor-pointer" title="Change Photo">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
             </svg>
-          </div>
+            <input id="{{ form.profile_picture.id_for_label }}" name="{{ form.profile_picture.name }}"
+              type="file" class="hidden" accept="image/*">
+          </label>
         </div>
         <div class="mt-4 flex flex-col sm:flex-row gap-2 justify-center items-center">
-          <label for="{{ form.profile_picture.id_for_label }}" class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors inline-block">
-            Change Photo
-          </label>
-          <input id="{{ form.profile_picture.id_for_label }}" name="{{ form.profile_picture.name }}"
-            type="file" class="hidden" accept="image/*">
-
-          <button type="button" id="clear-photo-btn"
-            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
-            title="Remove photo">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-            Clear Photo
-          </button>
+          <span class="text-gray-400 text-sm">
+            JPG, PNG, GIF up to 2MB. Max resolution 1024x1024px.
+          </span>
+          {% if request.user.profile_picture %}
+            <button type="button" id="clear-photo-btn"
+              class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
+              title="Remove photo">
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+              Remove Photo
+            </button>
+          {% endif %}
         </div>
       </div>
-      {% endif %}
 
       <!-- Form Fields -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -123,6 +122,9 @@ if(input) {
       reader.onload = function(e) {
         if (preview.querySelector('img')) {
           preview.querySelector('img').src = e.target.result;
+        } else {
+          // If it was previously empty, create the img element
+          preview.innerHTML = `<img src="${e.target.result}" alt="Profile Picture" class="w-32 h-32 rounded-full object-cover border-4 border-white/20 shadow-lg">`;
         }
       };
       reader.readAsDataURL(file);

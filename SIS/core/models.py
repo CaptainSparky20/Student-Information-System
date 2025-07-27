@@ -12,7 +12,13 @@ class Lecturer(models.Model):
 class Course(models.Model):
     name = models.CharField(max_length=255)
     code = models.CharField(max_length=50, unique=True)
-    lecturer = models.ForeignKey(Lecturer, on_delete=models.SET_NULL, null=True, related_name='courses')
+    lecturers = models.ManyToManyField(
+    'Lecturer',
+    related_name='courses',
+    blank=True,
+    help_text='Lecturers teaching this course'
+)
+
     classroom = models.CharField(max_length=100, blank=True, null=True)  # Classroom location or name
 
     def __str__(self):

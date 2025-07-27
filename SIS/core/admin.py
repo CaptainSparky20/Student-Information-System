@@ -27,7 +27,13 @@ class StudentAdmin(admin.ModelAdmin):
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ('name', 'code', 'lecturer', 'classroom')
+    list_display = ('id', 'name', 'get_lecturers')  # add more field names as needed, e.g. 'code', 'description'
+
+
+    def get_lecturers(self, obj):
+        return ", ".join([str(lecturer) for lecturer in obj.lecturers.all()])
+    get_lecturers.short_description = "Lecturers"
+
 
 @admin.register(Enrollment)
 class EnrollmentAdmin(admin.ModelAdmin):

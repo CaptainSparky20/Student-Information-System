@@ -29,10 +29,81 @@
   </div>
 </div>
 
+<!-- Management Cards & Sidebar -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-  <!-- Profile Card -->
-  <div class="lg:col-span-2">
-    <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl mb-8">
+  <!-- Management Cards -->
+  <div class="lg:col-span-2 flex flex-col gap-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-8">
+      <!-- Student Management Card -->
+      <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xl font-semibold text-white">Manage Students</h3>
+        </div>
+        <p class="text-gray-300 text-sm mb-4">Oversee student enrollment and manage all student records.</p>
+        <div class="flex gap-2">
+          <a href="{% url 'adminportal:student_list' %}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-center">View Students</a>
+          <a href="{% url 'adminportal:add_student' %}" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg text-center">Add Student</a>
+        </div>
+      </div>
+      <!-- Lecturer Management Card -->
+      <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xl font-semibold text-white">Manage Lecturers</h3>
+        </div>
+        <p class="text-gray-300 text-sm mb-4">Add, view, or manage all lecturers in your institution.</p>
+        <div class="flex gap-2">
+          <a href="{% url 'adminportal:lecturer_list' %}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-center">View Lecturers</a>
+          <a href="{% url 'adminportal:add_lecturer' %}" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg text-center">Add Lecturer</a>
+        </div>
+      </div>
+      <!-- Course Management Card -->
+      <!-- Course Management Card -->
+<div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl flex flex-col">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-xl font-semibold text-white">Manage Courses</h3>
+  </div>
+  <p class="text-gray-300 text-sm mb-4">Add new courses, assign lecturers, or view all existing courses.</p>
+  <div class="flex gap-2">
+    <a href="{% url 'adminportal:course_list' %}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-center">
+      View Courses
+    </a>
+    <a href="{% url 'adminportal:add_course' %}" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg text-center">
+      Add Course
+    </a>
+    <!-- Remove or keep the following if you want a general "Assign Lecturer" action -->
+    <!--
+    <a href="{% url 'adminportal:assign_lecturer_course' pk=1 %}" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg text-center">
+      Assign Lecturer
+    </a>
+    -->
+  </div>
+</div>
+
+      <!-- Department Management Card -->
+      <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xl font-semibold text-white">Manage Departments</h3>
+        </div>
+        <p class="text-gray-300 text-sm mb-4">Add or view all academic departments.</p>
+        <div class="flex gap-2">
+          <a href="{% url 'adminportal:department_list' %}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-center">View Departments</a>
+          <a href="{% url 'adminportal:add_department' %}" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg text-center">Add Department</a>
+        </div>
+      </div>
+      <!-- Staff Management Card -->
+      <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xl font-semibold text-white">Manage Staff</h3>
+        </div>
+        <p class="text-gray-300 text-sm mb-4">View or add staff members to manage administrative users and support personnel.</p>
+        <div class="flex gap-2">
+          <a href="{% url 'adminportal:staff_list' %}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-center">View Staff</a>
+          <a href="{% url 'adminportal:add_staff' %}" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg text-center">Add Staff</a>
+        </div>
+      </div>
+    </div>
+    <!-- Profile Section (Below Cards) -->
+    <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl mt-8 max-w-3xl mx-auto">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-2">
         <h2 class="text-2xl font-semibold text-white">Your Profile</h2>
         <a href="{% url 'adminportal:profile_update' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all text-center">
@@ -58,49 +129,36 @@
         </div>
       </div>
     </div>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Lecturer Management Card -->
-      <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl flex flex-col mb-4">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-xl font-semibold text-white">Manage Lecturers</h3>
-        </div>
-        <p class="text-gray-300 text-sm mb-4">Add, view, or manage all lecturers in your institution.</p>
-        <div class="flex gap-2">
-          <a href="{% url 'adminportal:lecturer_list' %}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-center">View Lecturers</a>
-          <a href="{% url 'adminportal:add_lecturer' %}" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg text-center">Add Lecturer</a>
-        </div>
-      </div>
-      <!-- Student Management Card -->
-      <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl flex flex-col mb-4">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-xl font-semibold text-white">Manage Students</h3>
-        </div>
-        <p class="text-gray-300 text-sm mb-4">Oversee student enrollment and manage all student records.</p>
-        <div class="flex gap-2">
-          <a href="{% url 'adminportal:student_list' %}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-center">View Students</a>
-          <a href="{% url 'adminportal:add_student' %}" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg text-center">Add Student</a>
-        </div>
-      </div>
-    </div>
   </div>
-  <!-- Quick Actions & System Status Sidebar -->
-  <div class="space-y-6">
+  <!-- Sidebar: Quick Actions & System Status -->
+  <div class="flex flex-col gap-8">
     <!-- Quick Actions -->
     <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl">
       <h3 class="text-lg font-semibold text-white mb-4">Quick Actions</h3>
       <div class="space-y-3">
-        <a href="{% url 'adminportal:lecturer_list' %}" class="flex items-center p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-white group">
+        <a href="{% url 'adminportal:add_lecturer' %}" class="flex items-center p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-white group">
           <svg class="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
           </svg>
           Add New Lecturer
         </a>
-        <a href="{% url 'adminportal:student_list' %}" class="flex items-center p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-white group">
+        <a href="{% url 'adminportal:add_student' %}" class="flex items-center p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-white group">
           <svg class="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
           </svg>
           Add New Student
+        </a>
+        <a href="{% url 'adminportal:add_course' %}" class="flex items-center p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-white group">
+          <svg class="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Add New Course
+        </a>
+        <a href="{% url 'adminportal:add_department' %}" class="flex items-center p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-white group">
+          <svg class="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Add New Department
         </a>
       </div>
     </div>

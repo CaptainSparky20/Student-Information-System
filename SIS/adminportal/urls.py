@@ -22,7 +22,36 @@ urlpatterns = [
     path('lecturers/', views.lecturer_list, name='lecturer_list'),
     path('lecturers/add/', views.add_lecturer, name='add_lecturer'),
 
+    # export lecturers to CSV
+    path('lecturers/export/', views.export_lecturers, name='export_lecturers'),
+
     # Student management pages
     path('students/', views.student_list, name='student_list'),
     path('students/add/', views.add_student, name='add_student'),
+
+    #staff management pages
+    path('staff/', views.staff_list, name='staff_list'),
+    path('staff/add/', views.add_staff, name='add_staff'),
+
+    path('students/<int:pk>/', views.student_detail, name='student_detail'),
+    path('students/<int:pk>/edit/', views.student_edit, name='student_edit'),
+
+    # course editing pages
+    path('courses/<int:pk>/assign-lecturers/', views.assign_lecturer_course, name='assign_lecturer_course'),
+    path('courses/<int:pk>/edit/', views.edit_course, name='edit_course'),
+
+    #coruse management pages
+    path('courses/', views.course_list, name='course_list'),
+    path('courses/add/', views.add_course, name='add_course'),
+
+    # Export courses to CSV
+    path('courses/export/', views.export_courses, name='export_courses'),
+    
+    #department management pages
+    path('departments/', views.department_list, name='department_list'),
+    path('departments/add/', views.add_department, name='add_department'),
+
+
+
+
 ]

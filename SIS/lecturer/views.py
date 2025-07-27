@@ -23,7 +23,9 @@ def lecturer_dashboard(request):
     except Lecturer.DoesNotExist:
         raise Http404("Lecturer profile not found.")
 
-    courses = Course.objects.filter(lecturer=lecturer)
+    # FIX: define courses correctly!
+    courses = Course.objects.filter(lecturers=lecturer)
+
     courses_data = []
     attendance_values = []
     total_students = 0
@@ -53,6 +55,20 @@ def lecturer_dashboard(request):
             'course': course,
             'students_info': students_info,
         })
+
+    average_attendance = round(sum(attendance_values) / len(attendance_values), 2) if attendance_values else 0
+    notifications = Notification.objects.filter(lecturer=request.user, is_read=False)
+    notifications_unread_count = notifications.count()
+
+    context = {
+        'courses_data': courses_data,
+        'notifications': notifications,
+        'notifications_unread_count': notifications_unread_count,
+        'total_students': total_students,
+        'average_attendance': average_attendance,
+    }
+    return render(request, 'lecturer/dashboard.html', context)
+
 
     average_attendance = round(sum(attendance_values) / len(attendance_values), 2) if attendance_values else 0
     notifications = Notification.objects.filter(lecturer=request.user, is_read=False)
