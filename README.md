@@ -40,5 +40,5 @@ The **Student Information System (SIS)** is a web application designed to manage
 ##### .\venv\Scripts\activate
 
 ### 3. Run the server
-#####cd .\SIS\
+##### cd .\SIS\
 ##### python manage.py runserver
