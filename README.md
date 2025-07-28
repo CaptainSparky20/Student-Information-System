@@ -35,7 +35,7 @@ The **Student Information System (SIS)** is a web application designed to manage
 ```
 git clone https://github.com/your-repo/student-information-system.git
 ```
-### 2.  navigate to working directory
+### 2.  Navigate to working directory
 ```
 cd student-information-system
 ```
