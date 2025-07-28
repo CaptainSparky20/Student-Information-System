@@ -32,13 +32,34 @@ The **Student Information System (SIS)** is a web application designed to manage
 
 ### 1. Clone the Repository
 
-##### git clone https://github.com/your-repo/student-information-system.git
-##### cd student-information-system
+```
+git clone https://github.com/your-repo/student-information-system.git
+```
+### 2.  navigate to working directory
+```
+cd student-information-system
+```
 
-### 2. Setup and activate a virtual environemnt
-##### Set-ExecutionPolicy Unrestricted -Scope Process
-##### .\venv\Scripts\activate
+### 3. Setup and activate a virtual environement
 
-### 3. Run the server
-##### cd .\SIS\
-##### python manage.py runserver
+```
+Set-ExecutionPolicy Unrestricted -Scope Process
+```
+
+### 4.  Activate the script
+```
+\venv\Scripts\activate
+```
+
+
+### 5. Navigate to project directory
+
+```
+cd .\SIS\
+```
+
+### 6. Run the server
+
+```
+python manage.py runserver
+```
