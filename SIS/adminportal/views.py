@@ -12,6 +12,8 @@ from .forms import (
 from core.models import Department, Course, Lecturer, Student, Enrollment
 import csv
 from django.http import HttpResponse
+from .forms import AddStudentForm
+
 
 
 # ----- DASHBOARD -----
@@ -141,51 +143,40 @@ def student_list(request):
 
 @role_required(CustomUser.Role.ADMIN)
 def add_student(request):
-    departments = Department.objects.all()
-    courses = Course.objects.all()
-    if request.method == 'POST':
-        # Collect fields
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        registration_number = request.POST.get('registration_number')
-        department_id = request.POST.get('department')
-        course_id = request.POST.get('course')
-        phone_number = request.POST.get('phone_number')
-        address = request.POST.get('address')
-        date_of_birth = request.POST.get('date_of_birth')
-        profile_picture = request.FILES.get('profile_picture')
-        # Validate
-        if not all([first_name, last_name, email, password, registration_number, department_id, course_id]):
-            messages.error(request, "Please fill in all required fields.")
-            return render(request, 'adminportal/add_student.html', {
-                'departments': departments, 'courses': courses
-            })
-        if CustomUser.objects.filter(email=email).exists():
-            messages.error(request, "A user with this email already exists.")
-            return render(request, 'adminportal/add_student.html', {
-                'departments': departments, 'courses': courses
-            })
-        student_user = CustomUser.objects.create_user(
-            email=email, password=password,
-            first_name=first_name, last_name=last_name,
-            role=CustomUser.Role.STUDENT, department_id=department_id,
-        )
-        student_profile = Student.objects.get(user=student_user)
-        student_profile.registration_number = registration_number
-        student_profile.phone_number = phone_number
-        student_profile.address = address
-        student_profile.date_of_birth = date_of_birth
-        if profile_picture:
-            student_profile.profile_picture.save(profile_picture.name, profile_picture)
-        student_profile.save()
-        Enrollment.objects.create(student=student_profile, course_id=course_id)
-        messages.success(request, f"Student {student_user.get_full_name()} added and enrolled successfully.")
-        return redirect('adminportal:student_list')
-    return render(request, 'adminportal/add_student.html', {
-        'departments': departments, 'courses': courses
-    })
+    if request.method == "POST":
+        form = AddStudentForm(request.POST, request.FILES)
+        if form.is_valid():
+            data = form.cleaned_data
+            # Check for email duplication
+            if CustomUser.objects.filter(email=data['email']).exists():
+                form.add_error('email', "A user with this email already exists.")
+            else:
+                student_user = CustomUser.objects.create_user(
+                    email=data['email'],
+                    password=data['password'],
+                    first_name=data['first_name'],
+                    last_name=data['last_name'],
+                    role=CustomUser.Role.STUDENT,
+                    department=data['department'],
+                )
+                student_profile = Student.objects.get(user=student_user)
+                student_profile.registration_number = data['registration_number']
+                student_profile.phone_number = data.get('phone_number')
+                student_profile.address = data.get('address')
+                student_profile.date_of_birth = data.get('date_of_birth')
+                if data.get('profile_picture'):
+                    student_profile.profile_picture = data['profile_picture']
+                student_profile.save()
+                # Enroll and assign lecturer if your model supports it
+                enrollment = Enrollment.objects.create(student=student_profile, course=data['course'])
+                # If you want to store lecturer per enrollment, you can add it here
+                # enrollment.lecturer = data['lecturer']
+                # enrollment.save()
+                messages.success(request, f"Student {student_user.get_full_name()} added and enrolled successfully.")
+                return redirect('adminportal:student_list')
+    else:
+        form = AddStudentForm()
+    return render(request, 'adminportal/add_student.html', {'form': form})
 
 @role_required(CustomUser.Role.ADMIN)
 def student_detail(request, pk):
@@ -259,6 +250,7 @@ def export_students(request):
             phone,
         ])
     return response
+
 # ----- STAFF -----
 @role_required(CustomUser.Role.ADMIN)
 def staff_list(request):

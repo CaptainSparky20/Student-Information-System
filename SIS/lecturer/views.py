@@ -239,10 +239,12 @@ def student_disciplinary_actions(request, student_id):
 
 @role_required(CustomUser.Role.LECTURER)
 def student_full_details(request, student_id):
-    student = get_object_or_404(Student, id=student_id)
+    # student_id is the user's id
+    student = get_object_or_404(Student, user__id=student_id)
     return render(request, 'lecturer/student_full_details.html', {
         'student': student,
     })
+
 
 @role_required(CustomUser.Role.LECTURER)
 def update_student_activity(request, student_id):

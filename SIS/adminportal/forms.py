@@ -126,3 +126,99 @@ class DepartmentForm(forms.ModelForm):
                 'placeholder': 'Department name',
             }),
         }
+
+
+# ---------- ADD STUDENT FORM ----------
+class AddStudentForm(forms.Form):
+    first_name = forms.CharField(
+        max_length=30, 
+        label="First Name",
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none transition',
+            'placeholder': 'Enter first name'
+        })
+    )
+    last_name = forms.CharField(
+        max_length=30,
+        label="Last Name",
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none transition',
+            'placeholder': 'Enter last name'
+        })
+    )
+    email = forms.EmailField(
+        label="Email",
+        widget=forms.EmailInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none transition',
+            'placeholder': 'student@example.com'
+        })
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none transition',
+            'placeholder': 'Set a password'
+        }),
+        label="Password"
+    )
+    registration_number = forms.CharField(
+        max_length=50,
+        label="Registration Number",
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none transition',
+            'placeholder': 'Enter registration number'
+        })
+    )
+    department = forms.ModelChoiceField(
+        queryset=Department.objects.all(),
+        label="Department",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 focus:ring-2 focus:ring-blue-500 focus:outline-none transition'
+        })
+    )
+    lecturer = forms.ModelChoiceField(
+        queryset=CustomUser.objects.filter(role=CustomUser.Role.LECTURER),
+        label="Assign Lecturer",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 focus:ring-2 focus:ring-blue-500 focus:outline-none transition'
+        })
+    )
+    course = forms.ModelChoiceField(
+        queryset=Course.objects.all(),
+        label="Assign to Course",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 focus:ring-2 focus:ring-blue-500 focus:outline-none transition'
+        })
+    )
+    profile_picture = forms.ImageField(
+        required=False,
+        label="Profile Picture",
+        widget=forms.ClearableFileInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 focus:ring-2 focus:ring-blue-500 focus:outline-none transition'
+        })
+    )
+    phone_number = forms.CharField(
+        required=False,
+        max_length=20,
+        label="Phone Number",
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none transition',
+            'placeholder': 'Optional'
+        })
+    )
+    address = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none transition',
+            'placeholder': 'Optional',
+            'rows': 3
+        }),
+        required=False,
+        label="Address"
+    )
+    date_of_birth = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 focus:ring-2 focus:ring-blue-500 focus:outline-none transition'
+        }),
+        required=False,
+        label="Date of Birth"
+    )

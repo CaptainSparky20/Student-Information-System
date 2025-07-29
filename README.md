@@ -12,7 +12,6 @@ The **Student Information System (SIS)** is a web application designed to manage
 
 * **Authentication System:** Secure login for Students, Lecturers, and Admins
 * **Role-Based Dashboards:**
-
   * **Student Dashboard:** View grades, course schedules, and profile info
   * **Lecturer Dashboard:** Manage student grades, attendance, and course materials
   * **Admin Dashboard:** Manage users, courses, and announcements
@@ -24,47 +23,43 @@ The **Student Information System (SIS)** is a web application designed to manage
 
 * **Frontend:** HTML, Tailwind CSS, JavaScript
 * **Backend:** Django (Python)
-* **Database:** SQLite
+* **Database:** SQLite (default, can switch to MariaDB/PostgreSQL for production)
 * **Admin Interface:** Django Admin, Django Templates
-
-## Getting Started
-
-1. **Clone the repository:**
-
-   ```bash
-   git clone https://github.com/your-repo/student-information-system.git
-   cd student-information-system
-   ```
-
-2. **Create and activate a virtual environment:**
-
-   ```bash
-   python -m venv env
-   # On Windows
-   env\Scripts\activate
-   # On macOS/Linux
-   source env/bin/activate
-   ```
-
-3. **Install dependencies:**
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Run migrations and start the server:**
-
-   ```bash
-   python manage.py migrate
-   python manage.py runserver
-   ```
-
-## Future Enhancements
-
-* Student performance analytics
-* File upload/download for assignments
-* API support for mobile apps
-* Integration with external systems (e.g., library, finance)
 
 ---
 
+## 🚀 Quick Start
+
+### 1. Clone the Repository
+
+```
+git clone https://github.com/your-repo/student-information-system.git
+```
+### 2.  navigate to working directory
+```
+cd student-information-system
+```
+
+### 3. Setup and activate a virtual environement
+
+```
+Set-ExecutionPolicy Unrestricted -Scope Process
+```
+
+### 4.  Activate the script
+```
+\venv\Scripts\activate
+```
+
+
+### 5. Navigate to project directory
+
+```
+cd .\SIS\
+```
+
+### 6. Run the server
+
+```
+python manage.py runserver
+```
