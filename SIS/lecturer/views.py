@@ -1,8 +1,16 @@
+# Standard library imports
+import csv
+from datetime import date, datetime, timedelta
+
+# Django imports
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.contrib import messages
 from django.utils import timezone
 from django import forms
+from django.contrib.auth.decorators import login_required
+
+# App/model imports
 from core.models import (
     Lecturer, Course, Enrollment, Attendance,
     Student, StudentAchievement, DisciplinaryAction
@@ -11,16 +19,7 @@ from accounts.models import CustomUser
 from accounts.decorators import role_required
 from accounts.forms import LecturerProfileUpdateForm
 from notifications.models import Notification
-from .forms import (
-    AttendanceForm, MessageForm
-)
-from datetime import date
-from django.contrib.auth.decorators import login_required
-import csv
-from datetime import datetime
-from django.http import HttpResponse
-from core.models import Lecturer, Course, Enrollment, Attendance
-
+from .forms import AttendanceForm, MessageForm
 
 
 @role_required(CustomUser.Role.LECTURER)
@@ -30,12 +29,18 @@ def lecturer_dashboard(request):
     except Lecturer.DoesNotExist:
         raise Http404("Lecturer profile not found.")
 
-    # FIX: define courses correctly!
     courses = Course.objects.filter(lecturers=lecturer)
 
     courses_data = []
     attendance_values = []
     total_students = 0
+
+    # --- Count today's attendance ---
+    today = date.today()
+    todays_attendance_count = Attendance.objects.filter(
+        enrollment__course__in=courses,
+        date=today
+    ).count()
 
     for course in courses:
         enrollments = Enrollment.objects.filter(course=course).select_related('student__user')
@@ -73,20 +78,7 @@ def lecturer_dashboard(request):
         'notifications_unread_count': notifications_unread_count,
         'total_students': total_students,
         'average_attendance': average_attendance,
-    }
-    return render(request, 'lecturer/dashboard.html', context)
-
-
-    average_attendance = round(sum(attendance_values) / len(attendance_values), 2) if attendance_values else 0
-    notifications = Notification.objects.filter(lecturers=request.user, is_read=False)
-    notifications_unread_count = notifications.count()
-
-    context = {
-        'courses_data': courses_data,
-        'notifications': notifications,
-        'notifications_unread_count': notifications_unread_count,
-        'total_students': total_students,
-        'average_attendance': average_attendance,
+        'todays_attendance_count': todays_attendance_count,  # <-- THIS enables your dashboard card!
     }
     return render(request, 'lecturer/dashboard.html', context)
 
@@ -136,47 +128,124 @@ def mark_individual_attendance(request, enrollment_id):
 @role_required(CustomUser.Role.LECTURER)
 def attendance_list(request):
     lecturer = get_object_or_404(Lecturer, user=request.user)
-    courses = Course.objects.filter(lecturers=lecturer)   # <-- FIX HERE
+    courses = Course.objects.filter(lecturers=lecturer)
     enrollments = Enrollment.objects.filter(course__in=courses).select_related('student__user', 'course')
     today = date.today()
+    selected_date = request.POST.get('date') or request.GET.get('date') or today.isoformat()
 
-    # Bulk submission handler
+    # Parse selected date safely
+    try:
+        selected_date_obj = datetime.strptime(selected_date, "%Y-%m-%d").date()
+    except Exception:
+        selected_date_obj = today
+
+    # Attach attendance status for the selected date
+    att_map = {att.enrollment_id: att for att in Attendance.objects.filter(
+        enrollment__in=enrollments, date=selected_date_obj
+    )}
+    for enroll in enrollments:
+        att = att_map.get(enroll.id)
+        enroll.attendance_selected_date = att.status if att else None
+
     if request.method == "POST":
+        # Individual mark
+        single_enrollment_id = request.POST.get('single_enrollment_id')
+        single_status = request.POST.get('single_status')
+        if single_enrollment_id:
+            try:
+                enrollment = enrollments.get(id=single_enrollment_id)
+                if single_status in ['present', 'absent']:
+                    Attendance.objects.update_or_create(
+                        enrollment=enrollment,
+                        date=selected_date_obj,
+                        defaults={'status': single_status}
+                    )
+                    messages.success(request, f"Attendance for {enrollment.student.user.get_full_name()} on {selected_date_obj} set as {single_status.capitalize()}.")
+                else:
+                    messages.error(request, "Please select Present/Absent before marking.")
+            except Enrollment.DoesNotExist:
+                messages.error(request, "Enrollment not found.")
+            return redirect('lecturer:attendance_list')
+
+        # Bulk submission
         updated = 0
         for enrollment in enrollments:
             status = request.POST.get(f'status_{enrollment.id}')
             if status in ['present', 'absent']:
                 Attendance.objects.update_or_create(
                     enrollment=enrollment,
-                    date=today,
+                    date=selected_date_obj,
                     defaults={'status': status}
                 )
                 updated += 1
         if updated:
-            messages.success(request, f"Bulk attendance recorded for {updated} students for {today}.")
+            messages.success(request, f"Bulk attendance recorded for {updated} students for {selected_date_obj}.")
         else:
             messages.warning(request, "No attendance was marked.")
         return redirect('lecturer:attendance_list')
 
     context = {
         'enrollments': enrollments,
-        'today': today,
+        'today': today.isoformat(),
+        'selected_date': selected_date_obj.isoformat(),
     }
     return render(request, 'lecturer/attendance_list.html', context)
 
+from datetime import datetime, timedelta
+from django.utils.dateparse import parse_date
+from django.db.models import Q
+
 @role_required(CustomUser.Role.LECTURER)
 def attendance_history(request):
-    """View to list all past attendance taken by lecturer, grouped by date/course."""
     lecturer = get_object_or_404(Lecturer, user=request.user)
     courses = Course.objects.filter(lecturers=lecturer)
-    attendances = Attendance.objects.filter(enrollment__course__in=courses).select_related('enrollment__student__user', 'enrollment__course').order_by('-date', 'enrollment__course', 'enrollment__student__user__last_name')
+    attendance_list = None
+    selected_course = None
+    selected_date = date.today()
+
+    if request.method == "POST":
+        course_id = request.POST.get('course')
+        date_str = request.POST.get('date')
+        monthly = request.POST.get('monthly')
+        if date_str:
+            from django.utils.dateparse import parse_date
+            selected_date = parse_date(date_str) or date.today()
+        if course_id:
+            try:
+                selected_course = Course.objects.get(id=course_id)
+                if monthly:
+                    # Get all attendance for that month
+                    month_start = selected_date.replace(day=1)
+                    if selected_date.month == 12:
+                        next_month = selected_date.replace(year=selected_date.year+1, month=1, day=1)
+                    else:
+                        next_month = selected_date.replace(month=selected_date.month+1, day=1)
+                    month_end = next_month - timedelta(days=1)
+                    attendance_list = Attendance.objects.filter(
+                        enrollment__course=selected_course,
+                        date__range=[month_start, month_end]
+                    ).select_related('student__user', 'enrollment__student__user')
+                else:
+                    attendance_list = Attendance.objects.filter(
+                        enrollment__course=selected_course,
+                        date=selected_date
+                    ).select_related('student__user', 'enrollment__student__user')
+            except Course.DoesNotExist:
+                selected_course = None
+
+    from lecturer.forms import AttendanceHistoryFilterForm
+    filter_form = AttendanceHistoryFilterForm(initial={
+        'course': selected_course.id if selected_course else '',
+        'date': selected_date,
+    })
 
     context = {
-        'attendances': attendances,
+        'attendance_list': attendance_list,
+        'form': filter_form,
+        'selected_course': selected_course,
+        'selected_date': selected_date,
     }
     return render(request, 'lecturer/attendance_history.html', context)
-
-# --- The following are unchanged utility/profile/message/achievement functions ---
 
 @role_required(CustomUser.Role.LECTURER)
 def send_message(request):

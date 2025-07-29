@@ -165,3 +165,19 @@ class MessageForm(forms.Form):
         }),
         label="Message"
     )
+
+class AttendanceHistoryFilterForm(forms.Form):
+    course = forms.ModelChoiceField(
+        queryset=Course.objects.none(), required=False, label="Course",
+        widget=forms.Select(attrs={'class': 'text-white bg-gray-800 rounded p-2'})
+    )
+    date = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'text-white bg-gray-800 rounded p-2'}),
+        required=False, label="Date"
+    )
+
+    def __init__(self, *args, **kwargs):
+        courses = kwargs.pop('courses', None)
+        super().__init__(*args, **kwargs)
+        if courses is not None:
+            self.fields['course'].queryset = courses
