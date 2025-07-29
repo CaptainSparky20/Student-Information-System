@@ -1,5 +1,7 @@
 # Student Information System
 
+* **
+
 ## About Us
 
 We, the students of CS4D Group, created this Student Information System as our final year project.
@@ -19,6 +21,12 @@ The **Student Information System (SIS)** is a web application designed to manage
 * **Course Management:** Enroll in courses, assign lecturers, and view syllabi
 * **Responsive Design:** Mobile-friendly UI using Tailwind CSS
 
+
+## Latest Addition
+* Lecturer dashboard with real stats and quick actions
+- Filter and export student, lecturer, and attendance lists to CSV
+- Bulk and individual attendance marking
+- Past attendance lookup by course and date
 ## Tech Stack
 
 * **Frontend:** HTML, Tailwind CSS, JavaScript
