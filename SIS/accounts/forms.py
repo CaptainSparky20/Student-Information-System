@@ -1,8 +1,56 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm, ReadOnlyPasswordHashField
 from .models import CustomUser
 from core.models import Department
 
+# ---------- Custom User Creation Form for Admin ----------
+class CustomUserCreationForm(UserCreationForm):
+    class Meta:
+        model = CustomUser
+        fields = (
+            'email', 'identity_card_number', 'full_name', 'short_name', 'role',
+            'phone_number', 'address', 'department', 'profile_picture'
+        )
+        widgets = {
+            'email': forms.EmailInput(attrs={'placeholder': 'Email address'}),
+            'identity_card_number': forms.TextInput(attrs={'placeholder': 'IC Number (e.g. 001231-14-1234)'}),
+            'full_name': forms.TextInput(attrs={'placeholder': 'Full Name (as per IC)'}),
+            'short_name': forms.TextInput(attrs={'placeholder': 'Short Name (e.g. Ali)'}),
+            'phone_number': forms.TextInput(attrs={'placeholder': 'Phone Number'}),
+            'address': forms.Textarea(attrs={'placeholder': 'Address', 'rows': 2}),
+            'profile_picture': forms.FileInput(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].required = True
+        self.fields['identity_card_number'].required = True
+        self.fields['full_name'].required = True
+        self.fields['short_name'].required = True
+
+# ---------- Custom User Change Form for Admin ----------
+class CustomUserChangeForm(UserChangeForm):
+    password = ReadOnlyPasswordHashField()
+
+    class Meta:
+        model = CustomUser
+        fields = (
+            'email', 'identity_card_number', 'full_name', 'short_name', 'role',
+            'phone_number', 'address', 'department', 'profile_picture', 'password',
+            'is_active', 'is_staff', 'is_superuser'
+        )
+        widgets = {
+            'email': forms.EmailInput(attrs={'readonly': 'readonly'}),
+            'identity_card_number': forms.TextInput(attrs={'readonly': 'readonly'}),
+            'profile_picture': forms.FileInput(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].required = True
+        self.fields['identity_card_number'].required = True
+
+# ---------- Lecturer Creation Form (for admin/portal use) ----------
 class LecturerCreationForm(forms.ModelForm):
     password = forms.CharField(
         label="Password",
@@ -24,13 +72,14 @@ class LecturerCreationForm(forms.ModelForm):
     class Meta:
         model = CustomUser
         fields = [
-            'first_name', 'last_name', 'email', 'password', 'department', 'phone_number', 
-            'address', 'profile_picture', 'date_joined'
+            'full_name', 'short_name', 'identity_card_number', 'email', 'password',
+            'department', 'phone_number', 'address', 'profile_picture', 'date_joined'
         ]
         widgets = {
             'email': forms.EmailInput(attrs={'placeholder': 'Lecturer Email'}),
-            'first_name': forms.TextInput(attrs={'placeholder': 'First Name'}),
-            'last_name': forms.TextInput(attrs={'placeholder': 'Last Name'}),
+            'full_name': forms.TextInput(attrs={'placeholder': 'Full Name (as per IC)'}),
+            'short_name': forms.TextInput(attrs={'placeholder': 'Short Name (e.g. Ali)'}),
+            'identity_card_number': forms.TextInput(attrs={'placeholder': 'IC Number (e.g. 001231-14-1234)'}),
             'phone_number': forms.TextInput(attrs={'placeholder': 'Phone Number'}),
             'address': forms.Textarea(attrs={'placeholder': 'Address', 'rows': 3}),
         }
@@ -43,51 +92,42 @@ class LecturerCreationForm(forms.ModelForm):
             user.save()
         return user
 
-
-class CustomUserCreationForm(UserCreationForm):
-    class Meta:
-        model = CustomUser
-        fields = ('email', 'role')
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['password1'].label = "Password"
-        self.fields['password2'].label = "Confirm Password"
-        self.fields['email'].required = True
-        self.fields['email'].widget.attrs.update({'placeholder': 'Email address'})
-
-class CustomUserChangeForm(UserChangeForm):
-    class Meta:
-        model = CustomUser
-        fields = ('email', 'role', 'first_name', 'last_name', 'phone_number', 'address', 'department', 'profile_picture')
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['email'].widget.attrs.update({'readonly': 'readonly'})
-
+# ---------- Student Profile Update Form ----------
 class StudentProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = CustomUser
-        fields = ['first_name', 'last_name', 'email', 'phone_number', 'address', 'profile_picture']
+        fields = [
+            'full_name', 'short_name', 'identity_card_number', 'email',
+            'phone_number', 'address', 'profile_picture'
+        ]
         widgets = {
             'email': forms.EmailInput(attrs={'readonly': 'readonly'}),
+            'identity_card_number': forms.TextInput(attrs={'readonly': 'readonly'}),
+            'profile_picture': forms.FileInput(),
         }
 
+# ---------- Lecturer Profile Update Form ----------
 class LecturerProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = CustomUser
-        fields = ['first_name', 'last_name', 'email', 'phone_number', 'address', 'department', 'profile_picture']
+        fields = [
+            'full_name', 'short_name', 'identity_card_number', 'email',
+            'phone_number', 'address', 'department', 'profile_picture'
+        ]
         widgets = {
             'email': forms.EmailInput(attrs={'readonly': 'readonly'}),
+            'identity_card_number': forms.TextInput(attrs={'readonly': 'readonly'}),
+            'profile_picture': forms.FileInput(),
         }
 
+# ---------- Unified Login Form (Email or IC) ----------
 class UnifiedLoginForm(forms.Form):
-    email = forms.EmailField(
-        widget=forms.EmailInput(attrs={
-            'placeholder': 'Enter your email',
+    identifier = forms.CharField(
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Email or Identity Card Number',
             'class': 'w-full mb-4 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500'
         }),
-        label="Email"
+        label="Email or Identity Card Number"
     )
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={

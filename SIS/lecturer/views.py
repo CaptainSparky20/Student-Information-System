@@ -1,16 +1,15 @@
-# Standard library imports
 import csv
 from datetime import date, datetime, timedelta
 
-# Django imports
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404, HttpResponse
 from django.contrib import messages
 from django.utils import timezone
 from django import forms
 from django.contrib.auth.decorators import login_required
+from django.utils.dateparse import parse_date
+from django.db.models import Q
 
-# App/model imports
 from core.models import (
     Lecturer, Course, Enrollment, Attendance,
     Student, StudentAchievement, DisciplinaryAction
@@ -19,39 +18,42 @@ from accounts.models import CustomUser
 from accounts.decorators import role_required
 from accounts.forms import LecturerProfileUpdateForm
 from notifications.models import Notification
-from .forms import AttendanceForm, MessageForm
+from .forms import AttendanceForm, MessageForm, AttendanceHistoryFilterForm
 
+# ==============================================================
+# DASHBOARD & PROFILE VIEWS
+# ==============================================================
 
 @role_required(CustomUser.Role.LECTURER)
 def lecturer_dashboard(request):
+    """
+    Lecturer dashboard: shows course, student, and attendance stats.
+    """
     try:
         lecturer = Lecturer.objects.get(user=request.user)
     except Lecturer.DoesNotExist:
         raise Http404("Lecturer profile not found.")
 
     courses = Course.objects.filter(lecturers=lecturer)
-
     courses_data = []
     attendance_values = []
     total_students = 0
 
-    # --- Count today's attendance ---
+    # Count unique students with attendance taken today (across all sessions)
     today = date.today()
     todays_attendance_count = Attendance.objects.filter(
         enrollment__course__in=courses,
         date=today
-    ).count()
+    ).values('enrollment__student').distinct().count()
 
     for course in courses:
         enrollments = Enrollment.objects.filter(course=course).select_related('student__user')
         students_info = []
-
         for enrollment in enrollments:
             attendance_records = Attendance.objects.filter(enrollment=enrollment)
             total_attendance = attendance_records.count()
             present_attendance = attendance_records.filter(status='present').count()
             attendance_percentage = (present_attendance / total_attendance * 100) if total_attendance > 0 else 0
-
             students_info.append({
                 'student': enrollment.student,
                 'email': enrollment.student.user.email,
@@ -61,7 +63,6 @@ def lecturer_dashboard(request):
                 'enrollment': enrollment,
             })
             attendance_values.append(attendance_percentage)
-
         total_students += len(students_info)
         courses_data.append({
             'course': course,
@@ -78,13 +79,115 @@ def lecturer_dashboard(request):
         'notifications_unread_count': notifications_unread_count,
         'total_students': total_students,
         'average_attendance': average_attendance,
-        'todays_attendance_count': todays_attendance_count,  # <-- THIS enables your dashboard card!
+        'todays_attendance_count': todays_attendance_count,
     }
     return render(request, 'lecturer/dashboard.html', context)
 
 @role_required(CustomUser.Role.LECTURER)
+def lecturer_profile(request):
+    """
+    Show lecturer's profile.
+    """
+    return render(request, 'lecturer/profile.html', {'user': request.user})
+
+@role_required(CustomUser.Role.LECTURER)
+def lecturer_profile_update(request):
+    """
+    Allow lecturer to update profile details.
+    """
+    user = request.user
+    if request.method == 'POST':
+        form = LecturerProfileUpdateForm(request.POST, request.FILES, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your profile has been updated successfully.')
+            return redirect('lecturer:profile')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = LecturerProfileUpdateForm(instance=user)
+    return render(request, 'lecturer/profile_update.html', {'form': form})
+
+# ==============================================================
+# ATTENDANCE VIEWS (ALL COURSES & BULK)
+# ==============================================================
+
+@role_required(CustomUser.Role.LECTURER)
+def take_attendance(request):
+    """
+    Take attendance for the lecturer's first assigned course (bulk, by date/session).
+    """
+    lecturer = get_object_or_404(Lecturer, user=request.user)
+    courses = Course.objects.filter(lecturers=lecturer)
+    course = courses.first()
+    if not course:
+        messages.warning(request, "No course found for you.")
+        return render(request, "lecturer/take_attendance.html", {})
+
+    today = date.today()
+    selected_date = (
+        request.POST.get("date")
+        or request.GET.get("date")
+        or today.isoformat()
+    )
+    try:
+        selected_date_obj = datetime.strptime(selected_date, "%Y-%m-%d").date()
+    except Exception:
+        selected_date_obj = today
+
+    session_list = ["morning", "evening"]
+    selected_session = (
+        request.POST.get("session")
+        or request.GET.get("session")
+        or session_list[0]
+    )
+
+    enrollments = Enrollment.objects.filter(course=course).select_related("student__user")
+    attendance_qs = Attendance.objects.filter(
+        enrollment__in=enrollments,
+        date=selected_date_obj,
+        session=selected_session
+    )
+    att_map = {att.enrollment_id: att for att in attendance_qs}
+    for enroll in enrollments:
+        att = att_map.get(enroll.id)
+        enroll.attendance_selected_date = att.status if att else None
+        enroll.remarks = att.description if att else ""
+
+    statuses = ["present", "absent"]
+
+    if request.method == "POST" and "save_attendance" in request.POST:
+        updated = 0
+        for enrollment in enrollments:
+            status = request.POST.get(f"status_{enrollment.id}")
+            remarks = request.POST.get(f"remarks_{enrollment.id}", "")
+            if status in statuses:
+                Attendance.objects.update_or_create(
+                    enrollment=enrollment,
+                    date=selected_date_obj,
+                    session=selected_session,
+                    defaults={"status": status, "description": remarks},
+                )
+                updated += 1
+        messages.success(request, f"Attendance saved for {updated} students ({selected_session.capitalize()} session).")
+        return redirect(f"{request.path}?date={selected_date_obj}&session={selected_session}")
+
+    context = {
+        "course": course,
+        "enrollments": enrollments,
+        "today": today.isoformat(),
+        "selected_date": selected_date_obj.isoformat(),
+        "selected_session": selected_session,
+        "session_list": session_list,
+        "statuses": statuses,
+    }
+    return render(request, "lecturer/take_attendance.html", context)
+
+@role_required(CustomUser.Role.LECTURER)
 def mark_attendance(request):
-    # Not used for bulk anymore, keep for compatibility or remove if not needed.
+    """
+    Mark attendance (single submission, old API for compatibility).
+    """
     if request.method == 'POST':
         attendance_form = AttendanceForm(request.POST)
         if attendance_form.is_valid():
@@ -103,6 +206,9 @@ def mark_attendance(request):
 
 @role_required(CustomUser.Role.LECTURER)
 def mark_individual_attendance(request, enrollment_id):
+    """
+    Mark individual student's attendance.
+    """
     enrollment = get_object_or_404(Enrollment, id=enrollment_id)
 
     if request.method == 'POST':
@@ -125,268 +231,115 @@ def mark_individual_attendance(request, enrollment_id):
         'enrollment': enrollment
     })
 
-@role_required(CustomUser.Role.LECTURER)
-def attendance_list(request):
-    lecturer = get_object_or_404(Lecturer, user=request.user)
-    courses = Course.objects.filter(lecturers=lecturer)
-    enrollments = Enrollment.objects.filter(course__in=courses).select_related('student__user', 'course')
-    today = date.today()
-    selected_date = request.POST.get('date') or request.GET.get('date') or today.isoformat()
-
-    # Parse selected date safely
-    try:
-        selected_date_obj = datetime.strptime(selected_date, "%Y-%m-%d").date()
-    except Exception:
-        selected_date_obj = today
-
-    # Attach attendance status for the selected date
-    att_map = {att.enrollment_id: att for att in Attendance.objects.filter(
-        enrollment__in=enrollments, date=selected_date_obj
-    )}
-    for enroll in enrollments:
-        att = att_map.get(enroll.id)
-        enroll.attendance_selected_date = att.status if att else None
-
-    if request.method == "POST":
-        # Individual mark
-        single_enrollment_id = request.POST.get('single_enrollment_id')
-        single_status = request.POST.get('single_status')
-        if single_enrollment_id:
-            try:
-                enrollment = enrollments.get(id=single_enrollment_id)
-                if single_status in ['present', 'absent']:
-                    Attendance.objects.update_or_create(
-                        enrollment=enrollment,
-                        date=selected_date_obj,
-                        defaults={'status': single_status}
-                    )
-                    messages.success(request, f"Attendance for {enrollment.student.user.get_full_name()} on {selected_date_obj} set as {single_status.capitalize()}.")
-                else:
-                    messages.error(request, "Please select Present/Absent before marking.")
-            except Enrollment.DoesNotExist:
-                messages.error(request, "Enrollment not found.")
-            return redirect('lecturer:attendance_list')
-
-        # Bulk submission
-        updated = 0
-        for enrollment in enrollments:
-            status = request.POST.get(f'status_{enrollment.id}')
-            if status in ['present', 'absent']:
-                Attendance.objects.update_or_create(
-                    enrollment=enrollment,
-                    date=selected_date_obj,
-                    defaults={'status': status}
-                )
-                updated += 1
-        if updated:
-            messages.success(request, f"Bulk attendance recorded for {updated} students for {selected_date_obj}.")
-        else:
-            messages.warning(request, "No attendance was marked.")
-        return redirect('lecturer:attendance_list')
-
-    context = {
-        'enrollments': enrollments,
-        'today': today.isoformat(),
-        'selected_date': selected_date_obj.isoformat(),
-    }
-    return render(request, 'lecturer/attendance_list.html', context)
-
-from datetime import datetime, timedelta
-from django.utils.dateparse import parse_date
-from django.db.models import Q
+# ==============================================================
+# ATTENDANCE HISTORY (PAST ATTENDANCE VIEWS)
+# ==============================================================
 
 @role_required(CustomUser.Role.LECTURER)
 def attendance_history(request):
+    """
+    View attendance records for a selected course and period.
+    Shows both 'morning' and 'evening' attendance for each student, for each day in the period.
+    """
     lecturer = get_object_or_404(Lecturer, user=request.user)
     courses = Course.objects.filter(lecturers=lecturer)
-    attendance_list = None
+
+    session_list = ["morning", "evening"]
+    period_list = ["day", "week", "month"]
+
+    course_id = request.GET.get('course')
+    date_str = request.GET.get('date')
+    selected_period = request.GET.get('period', 'day')
+
+    if not course_id and courses.exists():
+        course_id = str(courses.first().id)
+    selected_date = parse_date(date_str) if date_str else date.today()
     selected_course = None
-    selected_date = date.today()
+    attendance_list = None
+    days_range = []
 
-    if request.method == "POST":
-        course_id = request.POST.get('course')
-        date_str = request.POST.get('date')
-        monthly = request.POST.get('monthly')
-        if date_str:
-            from django.utils.dateparse import parse_date
-            selected_date = parse_date(date_str) or date.today()
-        if course_id:
-            try:
-                selected_course = Course.objects.get(id=course_id)
-                if monthly:
-                    # Get all attendance for that month
-                    month_start = selected_date.replace(day=1)
-                    if selected_date.month == 12:
-                        next_month = selected_date.replace(year=selected_date.year+1, month=1, day=1)
-                    else:
-                        next_month = selected_date.replace(month=selected_date.month+1, day=1)
-                    month_end = next_month - timedelta(days=1)
-                    attendance_list = Attendance.objects.filter(
-                        enrollment__course=selected_course,
-                        date__range=[month_start, month_end]
-                    ).select_related('student__user', 'enrollment__student__user')
-                else:
-                    attendance_list = Attendance.objects.filter(
-                        enrollment__course=selected_course,
-                        date=selected_date
-                    ).select_related('student__user', 'enrollment__student__user')
-            except Course.DoesNotExist:
-                selected_course = None
+    form = AttendanceHistoryFilterForm(
+        initial={
+            'course': course_id or '',
+            'date': selected_date,
+        },
+        courses=courses
+    )
 
-    from lecturer.forms import AttendanceHistoryFilterForm
-    filter_form = AttendanceHistoryFilterForm(initial={
-        'course': selected_course.id if selected_course else '',
-        'date': selected_date,
-    })
+    if course_id:
+        try:
+            selected_course = Course.objects.get(id=course_id)
+        except Course.DoesNotExist:
+            selected_course = None
 
-    context = {
-        'attendance_list': attendance_list,
-        'form': filter_form,
-        'selected_course': selected_course,
-        'selected_date': selected_date,
-    }
-    return render(request, 'lecturer/attendance_history.html', context)
+    if selected_course:
+        enrollments = Enrollment.objects.filter(course=selected_course).select_related('student__user')
 
-@role_required(CustomUser.Role.LECTURER)
-def send_message(request):
-    if request.method == 'POST':
-        message_form = MessageForm(request.POST)
-        if message_form.is_valid():
-            student_email = message_form.cleaned_data['student_email']
-            message_text = message_form.cleaned_data['message']
-            try:
-                student_user = CustomUser.objects.get(email=student_email, role=CustomUser.Role.STUDENT)
-            except CustomUser.DoesNotExist:
-                messages.error(request, "Student not found.")
+        # Calculate days in period
+        if selected_period == "day":
+            days_range = [selected_date]
+        elif selected_period == "week":
+            week_start = selected_date - timedelta(days=selected_date.weekday())
+            days_range = [week_start + timedelta(days=i) for i in range(7)]
+        elif selected_period == "month":
+            month_start = selected_date.replace(day=1)
+            if selected_date.month == 12:
+                next_month = selected_date.replace(year=selected_date.year + 1, month=1, day=1)
             else:
-                Notification.objects.create(
-                    lecturer=request.user,
-                    message=f"Message sent to {student_user.get_full_name()}: {message_text}"
-                )
-                messages.success(request, "Message sent successfully.")
-        else:
-            messages.error(request, "Please correct the errors in the message form.")
-    return redirect('lecturer:dashboard')
+                next_month = selected_date.replace(month=selected_date.month + 1, day=1)
+            days_range = [month_start + timedelta(days=i) for i in range((next_month - month_start).days)]
 
-@role_required(CustomUser.Role.LECTURER)
-def lecturer_profile(request):
-    return render(request, 'lecturer/profile.html', {'user': request.user})
+        # Get ALL attendance records in this range (both sessions!)
+        att_filter = {
+            "enrollment__in": enrollments,
+            "date__range": [days_range[0], days_range[-1]],
+        }
+        attendance_records = Attendance.objects.filter(**att_filter).select_related('enrollment__student__user')
 
-@role_required(CustomUser.Role.LECTURER)
-def lecturer_profile_update(request):
-    user = request.user
-    if request.method == 'POST':
-        form = LecturerProfileUpdateForm(request.POST, request.FILES, instance=user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Your profile has been updated successfully.')
-            return redirect('lecturer:profile')
-        else:
-            messages.error(request, 'Please correct the errors below.')
-    else:
-        form = LecturerProfileUpdateForm(instance=user)
+        # Build a mapping: (enrollment_id, date, session) -> status
+        attendance_map = {}
+        for att in attendance_records:
+            attendance_map[(att.enrollment_id, att.date, att.session)] = att.status
 
-    return render(request, 'lecturer/profile_update.html', {'form': form})
-
-@role_required(CustomUser.Role.LECTURER)
-def student_achievements(request, student_id):
-    student = get_object_or_404(Student, id=student_id)
-    achievements = StudentAchievement.objects.filter(student=student).order_by('-date_awarded')
-    return render(request, 'lecturer/student_achievements.html', {
-        'student': student,
-        'achievements': achievements,
-    })
-
-@role_required(CustomUser.Role.LECTURER)
-def student_disciplinary_actions(request, student_id):
-    student = get_object_or_404(Student, id=student_id)
-    disciplinary_actions = DisciplinaryAction.objects.filter(student=student).order_by('-date')
-    return render(request, 'lecturer/student_disciplinary_actions.html', {
-        'student': student,
-        'disciplinary_actions': disciplinary_actions,
-    })
-
-@role_required(CustomUser.Role.LECTURER)
-def student_full_details(request, student_id):
-    # student_id is the user's id
-    student = get_object_or_404(Student, user__id=student_id)
-    return render(request, 'lecturer/student_full_details.html', {
-        'student': student,
-    })
-
-
-@role_required(CustomUser.Role.LECTURER)
-def update_student_activity(request, student_id):
-    student = get_object_or_404(Student, id=student_id)
-    student.latest_activity = timezone.now()
-    student.save(update_fields=['latest_activity'])
-    messages.success(request, f"Updated latest activity for {student.user.get_full_name()}.")
-    return redirect('lecturer:student_full_details', student_id=student.id)
-
-
-class AttendanceHistoryFilterForm(forms.Form):
-    course = forms.ModelChoiceField(queryset=Course.objects.none(), label="Course")
-    date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), label="Date")
-
-    def __init__(self, *args, **kwargs):
-        lecturer = kwargs.pop('lecturer')
-        super().__init__(*args, **kwargs)
-        self.fields['course'].queryset = Course.objects.filter(lecturers=lecturer)
-
-@role_required(CustomUser.Role.LECTURER)
-def attendance_history(request):
-    lecturer = get_object_or_404(Lecturer, user=request.user)
-    courses = Course.objects.filter(lecturers=lecturer)
-    attendance_list = None
-    selected_course = None
-    selected_date = None
-
-    if request.method == 'POST':
-        form = AttendanceHistoryFilterForm(request.POST, lecturer=lecturer)
-        if form.is_valid():
-            selected_course = form.cleaned_data['course']
-            selected_date = form.cleaned_data['date']
-            enrollments = Enrollment.objects.filter(course=selected_course).select_related('student__user')
-            attendance_records = Attendance.objects.filter(
-                enrollment__in=enrollments, date=selected_date
-            ).select_related('enrollment__student__user')
-
-            # Build a dict: enrollment_id -> attendance obj (for fast lookup)
-            attendance_map = {a.enrollment_id: a for a in attendance_records}
-
-            attendance_list = []
-            for enrollment in enrollments:
-                att = attendance_map.get(enrollment.id)
-                attendance_list.append({
-                    'student': enrollment.student,
-                    'status': att.status if att else 'not marked',
-                })
-    else:
-        form = AttendanceHistoryFilterForm(lecturer=lecturer)
+        attendance_list = []
+        for enrollment in enrollments:
+            status_by_day = []
+            for day in days_range:
+                # Always lookup both sessions for every day
+                morning_status = attendance_map.get((enrollment.id, day, "morning"), "not marked")
+                evening_status = attendance_map.get((enrollment.id, day, "evening"), "not marked")
+                status_by_day.append({'date': day, 'morning': morning_status, 'evening': evening_status})
+            attendance_list.append({
+                'student': enrollment.student,
+                'statuses': status_by_day,
+            })
 
     context = {
         'form': form,
         'attendance_list': attendance_list,
         'selected_course': selected_course,
         'selected_date': selected_date,
+        'selected_period': selected_period,
+        'session_list': session_list,
+        'period_list': period_list,
+        'days_range': days_range,
     }
     return render(request, 'lecturer/attendance_history.html', context)
 
-@role_required(CustomUser.Role.LECTURER)
-def course_student_list(request, course_id):
-    course = get_object_or_404(Course, id=course_id)
-    enrollments = Enrollment.objects.filter(course=course).select_related('student__user')
-    students = [enrollment.student for enrollment in enrollments]
-    return render(request, 'student_list.html', {'course': course, 'students': students})
 
+# ==============================================================
+# COURSE-SPECIFIC ATTENDANCE AND HISTORY
+# ==============================================================
 
 @role_required(CustomUser.Role.LECTURER)
 def course_attendance(request, course_id):
-    course = get_object_or_404(Course, id=course_id, lecturer__user=request.user)
+    """
+    Bulk attendance page for a specific course.
+    """
+    course = get_object_or_404(Course, id=course_id, lecturers__user=request.user)
     enrollments = Enrollment.objects.filter(course=course).select_related('student__user')
     today = date.today()
 
-    # Bulk attendance for this course
     if request.method == "POST":
         updated = 0
         for enrollment in enrollments:
@@ -412,10 +365,12 @@ def course_attendance(request, course_id):
 
 @role_required(CustomUser.Role.LECTURER)
 def course_attendance_history(request, course_id):
-    course = get_object_or_404(Course, id=course_id, lecturer__user=request.user)
+    """
+    Attendance by date for a specific course.
+    """
+    course = get_object_or_404(Course, id=course_id, lecturers__user=request.user)
     enrollments = Enrollment.objects.filter(course=course)
     attendance_by_date = {}
-
     for att in Attendance.objects.filter(enrollment__in=enrollments).select_related('enrollment__student__user').order_by('-date'):
         day = att.date
         if day not in attendance_by_date:
@@ -427,29 +382,100 @@ def course_attendance_history(request, course_id):
         'attendance_by_date': attendance_by_date,
     })
 
-def student_list(request, course_id):
+# ==============================================================
+# STUDENT & ACHIEVEMENT / DISCIPLINARY RECORD VIEWS
+# ==============================================================
+
+@role_required(CustomUser.Role.LECTURER)
+def course_student_list(request, course_id):
+    """
+    List all students for a course.
+    """
     course = get_object_or_404(Course, id=course_id)
     enrollments = Enrollment.objects.filter(course=course).select_related('student__user')
-    students = [enrollment.student.user for enrollment in enrollments]
-    return render(request, 'lecturer/student_list.html', {'students': students, 'course': course})
+    students = [enrollment.student for enrollment in enrollments]
+    return render(request, 'student_list.html', {'course': course, 'students': students})
 
-def student_list(request, course_id):
-    course = get_object_or_404(Course, id=course_id)
-    enrollments = Enrollment.objects.filter(course=course).select_related('student__user')
-    students = sorted(
-        [enrollment.student.user for enrollment in enrollments],
-        key=lambda u: u.get_full_name().lower()
-    )
-    return render(request, 'lecturer/student_list.html', {'students': students, 'course': course})
+@role_required(CustomUser.Role.LECTURER)
+def student_achievements(request, student_id):
+    """
+    List achievements for a student.
+    """
+    student = get_object_or_404(Student, id=student_id)
+    achievements = StudentAchievement.objects.filter(student=student).order_by('-date_awarded')
+    return render(request, 'lecturer/student_achievements.html', {
+        'student': student,
+        'achievements': achievements,
+    })
 
+@role_required(CustomUser.Role.LECTURER)
+def student_disciplinary_actions(request, student_id):
+    """
+    List disciplinary actions for a student.
+    """
+    student = get_object_or_404(Student, id=student_id)
+    disciplinary_actions = DisciplinaryAction.objects.filter(student=student).order_by('-date')
+    return render(request, 'lecturer/student_disciplinary_actions.html', {
+        'student': student,
+        'disciplinary_actions': disciplinary_actions,
+    })
 
+@role_required(CustomUser.Role.LECTURER)
+def student_full_details(request, student_id):
+    """
+    Show full student details.
+    """
+    student = get_object_or_404(Student, user__id=student_id)
+    return render(request, 'lecturer/student_full_details.html', {
+        'student': student,
+    })
+
+@role_required(CustomUser.Role.LECTURER)
+def update_student_activity(request, student_id):
+    """
+    Update student's latest activity timestamp.
+    """
+    student = get_object_or_404(Student, id=student_id)
+    student.latest_activity = timezone.now()
+    student.save(update_fields=['latest_activity'])
+    messages.success(request, f"Updated latest activity for {student.user.get_full_name()}.")
+    return redirect('lecturer:student_full_details', student_id=student.id)
+
+# ==============================================================
+# MESSAGING, EXPORTS, UTILITIES
+# ==============================================================
+
+@role_required(CustomUser.Role.LECTURER)
+def send_message(request):
+    """
+    Send notification to a student.
+    """
+    if request.method == 'POST':
+        message_form = MessageForm(request.POST)
+        if message_form.is_valid():
+            student_email = message_form.cleaned_data['student_email']
+            message_text = message_form.cleaned_data['message']
+            try:
+                student_user = CustomUser.objects.get(email=student_email, role=CustomUser.Role.STUDENT)
+            except CustomUser.DoesNotExist:
+                messages.error(request, "Student not found.")
+            else:
+                Notification.objects.create(
+                    lecturer=request.user,
+                    message=f"Message sent to {student_user.get_full_name()}: {message_text}"
+                )
+                messages.success(request, "Message sent successfully.")
+        else:
+            messages.error(request, "Please correct the errors in the message form.")
+    return redirect('lecturer:dashboard')
 
 def export_attendance(request):
-    # Get course and date from GET parameters
+    """
+    Export attendance records to CSV for a specific course and date.
+    """
     course_id = request.GET.get('course')
     date_str = request.GET.get('date')
 
-    # Security: Only allow for logged-in lecturers with this course
     try:
         lecturer = Lecturer.objects.get(user=request.user)
     except Lecturer.DoesNotExist:
@@ -459,19 +485,16 @@ def export_attendance(request):
     if not course:
         return HttpResponse("Course not found or access denied", status=404)
 
-    # Convert date string from dd-mm-yyyy to date object
     try:
         date_obj = datetime.strptime(date_str, "%d-%m-%Y").date()
     except (ValueError, TypeError):
         return HttpResponse("Invalid date format. Use dd-mm-yyyy.", status=400)
 
-    # Gather attendance records for the date
     enrollments = Enrollment.objects.filter(course=course).select_related('student__user')
     attendance_records = Attendance.objects.filter(
         enrollment__in=enrollments, date=date_obj
     ).select_related('enrollment__student__user')
 
-    # Prepare response
     response = HttpResponse(content_type='text/csv')
     filename = f"attendance_{course.code}_{date_obj.strftime('%d-%m-%Y')}.csv"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -479,7 +502,6 @@ def export_attendance(request):
     writer = csv.writer(response)
     writer.writerow(['Student Name', 'Email', 'Status'])
 
-    # Build a dict: enrollment_id -> attendance
     attendance_map = {a.enrollment_id: a for a in attendance_records}
 
     for enrollment in enrollments:
@@ -491,5 +513,6 @@ def export_attendance(request):
             student.email,
             status.capitalize()
         ])
-
     return response
+
+

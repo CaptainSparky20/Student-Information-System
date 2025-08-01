@@ -1,6 +1,6 @@
 from django import forms
 from accounts.models import CustomUser
-from core.models import Department, Student, Course, Lecturer
+from core.models import Department, Student, Course, Subject, ClassGroup, Lecturer
 
 # ---------- ADMIN PROFILE FORM ----------
 class AdminProfileForm(forms.ModelForm):
@@ -12,18 +12,17 @@ class AdminProfileForm(forms.ModelForm):
             'class': 'w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600',
         })
     )
-
     class Meta:
         model = CustomUser
-        fields = ['first_name', 'last_name', 'email', 'department', 'profile_picture']
+        fields = ['full_name', 'short_name', 'email', 'department', 'profile_picture']
         widgets = {
-            'first_name': forms.TextInput(attrs={
+            'full_name': forms.TextInput(attrs={
                 'class': 'w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600',
-                'placeholder': 'Enter your first name',
+                'placeholder': 'Enter your full name',
             }),
-            'last_name': forms.TextInput(attrs={
+            'short_name': forms.TextInput(attrs={
                 'class': 'w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600',
-                'placeholder': 'Enter your last name',
+                'placeholder': 'Enter your short name (e.g. Ali)',
             }),
             'email': forms.EmailInput(attrs={
                 'class': 'w-full border border-gray-300 rounded px-4 py-2 bg-gray-100 cursor-not-allowed',
@@ -35,7 +34,6 @@ class AdminProfileForm(forms.ModelForm):
                 'accept': 'image/*',
             }),
         }
-
 
 # ---------- LECTURER CREATION FORM ----------
 class LecturerCreationForm(forms.ModelForm):
@@ -51,21 +49,41 @@ class LecturerCreationForm(forms.ModelForm):
 
     class Meta:
         model = CustomUser
-        fields = ['first_name', 'last_name', 'email', 'phone_number', 'department', 'profile_picture', 'date_joined']
-
+        fields = ['full_name', 'short_name', 'email', 'phone_number', 'department', 'profile_picture', 'date_joined']
+        widgets = {
+            'full_name': forms.TextInput(attrs={
+                'class': 'w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600',
+                'placeholder': 'Full Name (as per IC)',
+            }),
+            'short_name': forms.TextInput(attrs={
+                'class': 'w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600',
+                'placeholder': 'Short Name (e.g. Ali)',
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600',
+                'placeholder': 'Lecturer email address',
+            }),
+            'phone_number': forms.TextInput(attrs={
+                'class': 'w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600',
+                'placeholder': 'Phone number',
+            }),
+            'profile_picture': forms.FileInput(attrs={
+                'class': 'w-full px-4 py-2 bg-white/10 rounded border border-white/20 text-white',
+                'accept': 'image/*',
+            }),
+        }
 
 # ---------- STUDENT UPDATE FORM ----------
 class StudentUpdateForm(forms.ModelForm):
     class Meta:
         model = CustomUser
-        fields = ['first_name', 'last_name', 'email', 'department']
+        fields = ['full_name', 'short_name', 'email', 'department']
         widgets = {
-            'first_name': forms.TextInput(attrs={'class': 'form-input'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-input'}),
+            'full_name': forms.TextInput(attrs={'class': 'form-input'}),
+            'short_name': forms.TextInput(attrs={'class': 'form-input'}),
             'email': forms.EmailInput(attrs={'class': 'form-input'}),
             'department': forms.Select(attrs={'class': 'form-select'}),
         }
-
 
 # ---------- STUDENT PROFILE FORM ----------
 class StudentProfileUpdateForm(forms.ModelForm):
@@ -78,11 +96,10 @@ class StudentProfileUpdateForm(forms.ModelForm):
             'date_of_birth': forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}),
         }
 
-
-# ---------- ASSIGN LECTURERS TO COURSE FORM (ManyToMany) ----------
-class AssignLecturersForm(forms.ModelForm):
+# ---------- ASSIGN LECTURERS TO CLASSGROUP FORM (ManyToMany) ----------
+class AssignLecturersToClassGroupForm(forms.ModelForm):
     class Meta:
-        model = Course
+        model = ClassGroup
         fields = ['lecturers']
         widgets = {
             'lecturers': forms.SelectMultiple(attrs={
@@ -90,12 +107,11 @@ class AssignLecturersForm(forms.ModelForm):
             })
         }
 
-
 # ---------- ADD/EDIT COURSE FORM ----------
 class CourseForm(forms.ModelForm):
     class Meta:
         model = Course
-        fields = ['name', 'code', 'lecturers', 'classroom']
+        fields = ['name', 'code', 'department', 'description']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'w-full p-2 rounded bg-white/10 text-white border border-white/20',
@@ -105,15 +121,14 @@ class CourseForm(forms.ModelForm):
                 'class': 'w-full p-2 rounded bg-white/10 text-white border border-white/20',
                 'placeholder': 'Course code',
             }),
-            'lecturers': forms.SelectMultiple(attrs={
+            'department': forms.Select(attrs={
                 'class': 'w-full p-2 rounded bg-white/10 text-white border border-white/20',
             }),
-            'classroom': forms.TextInput(attrs={
+            'description': forms.Textarea(attrs={
                 'class': 'w-full p-2 rounded bg-white/10 text-white border border-white/20',
-                'placeholder': 'Classroom',
+                'placeholder': 'Course description (optional)',
             }),
         }
-
 
 # ---------- ADD/EDIT DEPARTMENT FORM ----------
 class DepartmentForm(forms.ModelForm):
@@ -127,23 +142,23 @@ class DepartmentForm(forms.ModelForm):
             }),
         }
 
-
 # ---------- ADD STUDENT FORM ----------
 class AddStudentForm(forms.Form):
-    first_name = forms.CharField(
-        max_length=30, 
-        label="First Name",
+    full_name = forms.CharField(
+        max_length=100,
+        label="Full Name",
         widget=forms.TextInput(attrs={
             'class': 'w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none transition',
-            'placeholder': 'Enter first name'
+            'placeholder': 'Enter full name'
         })
     )
-    last_name = forms.CharField(
-        max_length=30,
-        label="Last Name",
+    short_name = forms.CharField(
+        max_length=64,
+        label="Short Name",
+        required=False,
         widget=forms.TextInput(attrs={
             'class': 'w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none transition',
-            'placeholder': 'Enter last name'
+            'placeholder': 'Enter short name (optional)'
         })
     )
     email = forms.EmailField(

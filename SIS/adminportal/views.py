@@ -7,7 +7,7 @@ from accounts.models import CustomUser
 from .forms import (
     AdminProfileForm, LecturerCreationForm,
     StudentUpdateForm, StudentProfileUpdateForm,
-    AssignLecturersForm, CourseForm, DepartmentForm
+    CourseForm, DepartmentForm
 )
 from core.models import Department, Course, Lecturer, Student, Enrollment
 import csv

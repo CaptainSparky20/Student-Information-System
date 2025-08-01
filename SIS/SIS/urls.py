@@ -8,13 +8,13 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # Redirect root URL to unified login page
     path('', RedirectView.as_view(pattern_name='accounts:login', permanent=False)),
 
-    path('accounts/', include('accounts.urls', namespace='accounts')),  # Unified login here
+    path('accounts/', include('accounts.urls', namespace='accounts')),  
     path('student/', include('student.urls', namespace='student')),
     path('lecturer/', include('lecturer.urls', namespace='lecturer')),
     path('adminportal/', include('adminportal.urls')),
+    path('dashboard/', include('dashboard.urls', namespace='dashboard')),
     path('logout/', auth_views.LogoutView.as_view(next_page='accounts:login'), name='logout'),
 ]
 

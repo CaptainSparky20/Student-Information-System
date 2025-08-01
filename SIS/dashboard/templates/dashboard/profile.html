@@ -1,0 +1,11 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block dashboard_content %}
+  {% if request.user.role == "ADMIN" %}
+    {% include "dashboard/partials/admin_profile_content.html" %}
+  {% elif request.user.role == "LECTURER" %}
+    {% include "dashboard/partials/lecturer_profile_content.html" %}
+  {% elif request.user.role == "STUDENT" %}
+    {% include "dashboard/partials/student_profile_content.html" %}
+  {% endif %}
+{% endblock %}

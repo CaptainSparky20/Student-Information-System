@@ -21,19 +21,18 @@ class LecturerLoginForm(forms.Form):
 class LecturerProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = CustomUser
-        fields = ['first_name', 'last_name', 'department', 'phone_number', 'address']
+        fields = ['full_name', 'short_name', 'department', 'phone_number', 'address']
         widgets = {
-            'first_name': forms.TextInput(attrs={
+            'full_name': forms.TextInput(attrs={
                 'class': 'w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600',
-                'placeholder': 'Enter your first name',
+                'placeholder': 'Enter your full name',
             }),
-            'last_name': forms.TextInput(attrs={
+            'short_name': forms.TextInput(attrs={
                 'class': 'w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600',
-                'placeholder': 'Enter your last name',
+                'placeholder': 'Enter your short name (e.g. Ali)',
             }),
-            'department': forms.TextInput(attrs={
+            'department': forms.Select(attrs={
                 'class': 'w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600',
-                'placeholder': 'Enter your department',
             }),
             'phone_number': forms.TextInput(attrs={
                 'class': 'w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600',
@@ -57,23 +56,22 @@ class LecturerCreationForm(forms.ModelForm):
 
     class Meta:
         model = CustomUser
-        fields = ['first_name', 'last_name', 'email', 'department']
+        fields = ['full_name', 'short_name', 'email', 'department']
         widgets = {
-            'first_name': forms.TextInput(attrs={
+            'full_name': forms.TextInput(attrs={
                 'class': 'w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-600',
-                'placeholder': 'Enter first name',
+                'placeholder': 'Enter full name (as per IC)',
             }),
-            'last_name': forms.TextInput(attrs={
+            'short_name': forms.TextInput(attrs={
                 'class': 'w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-600',
-                'placeholder': 'Enter last name',
+                'placeholder': 'Enter short name (e.g. Ali)',
             }),
             'email': forms.EmailInput(attrs={
                 'class': 'w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-600',
                 'placeholder': 'Enter email address',
             }),
-            'department': forms.TextInput(attrs={
+            'department': forms.Select(attrs={
                 'class': 'w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-600',
-                'placeholder': 'Enter department',
             }),
         }
 

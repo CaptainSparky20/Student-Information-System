@@ -9,26 +9,38 @@ class CustomUserAdmin(UserAdmin):
     form = CustomUserChangeForm
     model = CustomUser
 
-    # Replace 'username' with 'email'
-    list_display = ['email', 'role', 'is_staff', 'is_active']
-    list_filter = ['role', 'is_staff', 'is_active']
+    list_display = ['email', 'identity_card_number', 'full_name', 'short_name', 'role', 'is_staff', 'is_active']
+    list_filter = ['role', 'is_staff', 'is_active', 'department']
 
-    # Define fieldsets explicitly, removing username
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        (_('Personal info'), {'fields': ('first_name', 'last_name', 'phone_number', 'address', 'role')}),
-        (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        (_('Personal info'), {
+            'fields': (
+                'identity_card_number', 'full_name', 'short_name',
+                'phone_number', 'address', 'department', 'profile_picture', 'role'
+            )
+        }),
+        (_('Permissions'), {
+            'fields': (
+                'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'
+            )
+        }),
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
     )
 
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'password1', 'password2', 'role', 'is_staff', 'is_active'),
+            'fields': (
+                'email', 'identity_card_number', 'full_name', 'short_name',
+                'password1', 'password2', 'role',
+                'phone_number', 'address', 'department', 'profile_picture',
+                'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'
+            ),
         }),
     )
 
-    search_fields = ('email', 'first_name', 'last_name')
+    search_fields = ('email', 'identity_card_number', 'full_name', 'short_name')
     ordering = ('email',)
     filter_horizontal = ('groups', 'user_permissions',)
 
