@@ -1,11 +1,14 @@
-{% extends 'dashboard/base_dashboard.html' %}
+{% extends 'base.html' %}
 
-{% block dashboard_content %}
-  {% if request.user.role == "ADMIN" %}
-    {% include "dashboard/partials/admin_profile_content.html" %}
-  {% elif request.user.role == "LECTURER" %}
-    {% include "dashboard/partials/lecturer_profile_content.html" %}
-  {% elif request.user.role == "STUDENT" %}
-    {% include "dashboard/partials/student_profile_content.html" %}
-  {% endif %}
+{% block content %}
+  {% include "partials/_topbar.html" %}
+  <div class="max-w-7xl mx-auto px-2 md:px-4 py-6">
+    {% if request.user.role == "ADMIN" %}
+      {% include "dashboard/partials/admin_part/admin_profile_content.html" %}
+    {% elif request.user.role == "LECTURER" %}
+      {% include "dashboard/partials/lecutrer_part/lecturer_profile_content.html" %}
+    {% elif request.user.role == "STUDENT" %}
+      {% include "dashboard/partials/student_part/student_profile_content.html" %}
+    {% endif %}
+  </div>
 {% endblock %}

@@ -1,11 +1,12 @@
-{% extends 'dashboard/base_dashboard.html' %}
+{% extends 'base.html' %}
+{% load widget_tweaks %}
 
 {% block dashboard_content %}
   {% if request.user.role == "ADMIN" %}
-    {% include "dashboard/partials/admin_profile_update_content.html" %}
+    {% include "dashboard/partials/admin_part/admin_profile_update_content.html" %}
   {% elif request.user.role == "LECTURER" %}
-    {% include "dashboard/partials/lecturer_profile_update_content.html" %}
+    {% include "dashboard/partials/lecutrer_part/lecturer_profile_update_content.html" %}
   {% elif request.user.role == "STUDENT" %}
-    {% include "dashboard/partials/student_profile_update_content.html" %}
+    {% include "dashboard/partials/student_part/student_profile_update_content.html" %}
   {% endif %}
 {% endblock %}

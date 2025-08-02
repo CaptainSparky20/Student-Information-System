@@ -16,6 +16,7 @@ urlpatterns = [
     path('adminportal/', include('adminportal.urls')),
     path('dashboard/', include('dashboard.urls', namespace='dashboard')),
     path('logout/', auth_views.LogoutView.as_view(next_page='accounts:login'), name='logout'),
+    path('accounts/', include('django.contrib.auth.urls')),
 ]
 
 if settings.DEBUG:

@@ -19,3 +19,42 @@ lecturer = CustomUser.objects.create_user(username='hafiz', password='password12
 
 # Create an admin user
 admin = CustomUser.objects.create_user(username='zirah', password='password123', role=CustomUser.Role.ADMIN)
+
+
+ui
+Reference Note: Glassmorphism/Blur Styles Used
+For cards and topbar:
+
+bg-white/10 or bg-white/5
+
+dark:bg-white/5 or dark:bg-white/10
+
+border border-white/20 or dark:border-white/10
+
+backdrop-blur-md (or use backdrop-blur-xl for heavier blur)
+
+rounded-2xl for large rounded corners
+
+shadow-xl for prominent shadow
+
+For profile dropdown:
+
+bg-white/40 dark:bg-white/10 (translucent, glass effect)
+
+border border-white/20 dark:border-white/10
+
+backdrop-blur-md
+
+rounded-2xl
+
+shadow-2xl
+
+General pattern:
+
+bg-white/opacity dark:bg-white/opacity border border-white/opacity dark:border-white/opacity backdrop-blur-md rounded-2xl shadow-xl
+
+
+Reference: 
+bg-white/10 dark:bg-white/5 backdrop-blur-md rounded-2xl border border-white/20 dark:border-white/10 shadow-xl transition-all
+
+

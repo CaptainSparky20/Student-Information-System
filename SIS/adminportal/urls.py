@@ -8,15 +8,8 @@ def redirect_to_unified_login(request):
     return redirect('accounts:login')
 
 urlpatterns = [
-    # Redirect old login URL to unified login
+    # Redirect to unified login
     path('login/', redirect_to_unified_login, name='login'),
-
-    # Admin main dashboard showing admin profile and links
-    path('dashboard/', views.admin_dashboard, name='dashboard'),
-
-    # Admin profile update page
-    path('profile/', views.admin_profile, name='admin_profile'),
-    path('profile/update/', views.admin_profile_update, name='profile_update'),
 
     # Lecturer management pages
     path('lecturers/', views.lecturer_list, name='lecturer_list'),

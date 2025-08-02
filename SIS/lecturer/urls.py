@@ -11,12 +11,6 @@ def redirect_to_unified_login(request):
 urlpatterns = [
     path('login/', redirect_to_unified_login, name='login'),
 
-    # Dashboard and profile
-    path('dashboard/', views.lecturer_dashboard, name='dashboard'),
-    path('profile/', views.lecturer_profile, name='profile'),
-    path('profile/update/', views.lecturer_profile_update, name='profile_update'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='accounts:login'), name='logout'),
-
     # Attendance (all courses)
     path('attendance/', views.take_attendance, name='attendance_list'),
     path('attendance/mark/', views.mark_attendance, name='mark_attendance'),

@@ -5,9 +5,8 @@ from django.db.models import Q
 from accounts.decorators import role_required
 from accounts.models import CustomUser
 from .forms import (
-    AdminProfileForm, LecturerCreationForm,
-    StudentUpdateForm, StudentProfileUpdateForm,
-    CourseForm, DepartmentForm
+     LecturerCreationForm, StudentUpdateForm, 
+     StudentProfileUpdateForm, CourseForm, DepartmentForm
 )
 from core.models import Department, Course, Lecturer, Student, Enrollment
 import csv
@@ -15,44 +14,6 @@ from django.http import HttpResponse
 from .forms import AddStudentForm
 
 
-
-# ----- DASHBOARD -----
-@role_required(CustomUser.Role.ADMIN)
-def admin_dashboard(request):
-    # Stats
-    total_lecturers = CustomUser.objects.filter(role=CustomUser.Role.LECTURER).count()
-    total_students = CustomUser.objects.filter(role=CustomUser.Role.STUDENT).count()
-    total_courses = Course.objects.count()
-    total_users = CustomUser.objects.count()
-    context = {
-        'total_lecturers': total_lecturers,
-        'total_students': total_students,
-        'total_courses': total_courses,
-        'total_users': total_users,
-    }
-    return render(request, 'adminportal/admin_dashboard.html', context)
-
-# ----- ADMIN PROFILE -----
-@role_required(CustomUser.Role.ADMIN)
-def admin_profile(request):
-    # Display admin details (profile page)
-    return render(request, 'adminportal/profile.html', {'user': request.user})
-
-@role_required(CustomUser.Role.ADMIN)
-def admin_profile_update(request):
-    # Update admin details (profile edit page)
-    admin_user = request.user
-    if request.method == 'POST':
-        form = AdminProfileForm(request.POST, request.FILES, instance=admin_user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Profile updated successfully.", extra_tags='admin_profile')
-            return redirect('adminportal:profile_update')
-        else:
-            messages.error(request, "Please correct the errors below.", extra_tags='admin_profile')
-    else:
-        form = AdminProfileForm(instance=admin_user)
-    return render(request, 'adminportal/admin_profile_update.html', {'form': form})
 
 # ----- LECTURERS -----
 
